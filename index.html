@@ -1,4 +1,74 @@
-HTML
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guild Master - Idle Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR (RECURSOS) -->
+    <header id="top-bar">
+        <div class="resource-box">
+            <span class="label">Ouro:</span>
+            <span id="gold-display" class="value">0</span>
+        </div>
+        <div class="resource-box">
+            <span class="label">Prestígio:</span>
+            <span id="prestige-display" class="value">0</span>
+        </div>
+        <div class="resource-box">
+            <span class="label">Membros:</span>
+            <span id="members-display" class="value">0 / 2</span>
+        </div>
+    </header>
+
+    <!-- ÁREA PRINCIPAL DO JOGO -->
+    <main id="app-container">
+        <!-- MENU LATERAL -->
+        <nav id="sidebar">
+            <button class="nav-btn active" onclick="switchTab('guilda')">🏰 Guilda</button>
+            <button class="nav-btn" onclick="switchTab('aventureiros')">⚔️ Aventureiros</button>
+            <button class="nav-btn" onclick="switchTab('missoes')">📜 Missões</button>
+            <button class="nav-btn" onclick="switchTab('construcoes')">🏗️ Construções</button>
+        </nav>
+
+        <!-- PAINEL DE CONTEÚDO -->
+        <section id="content-panel">
+            
+            <!-- ABA GUILDA -->
+            <div id="tab-guilda" class="tab-content active">
+                <h2>Administração da Guilda</h2>
+                <p>Bem-vindo, Mestre da Guilda! Clique abaixo para arrecadar fundos e começar o seu império.</p>
+                <button class="action-btn" onclick="clickGatherGold()">Coletar Impostos (+1 Ouro)</button>
+            </div>
+
+            <!-- ABA AVENTUREIROS -->
+            <div id="tab-aventureiros" class="tab-content">
+                <h2>Seus Aventureiros</h2>
+                <div id="adventurers-list">
+                    <p class="empty-msg">Nenhum aventureiro contratado ainda.</p>
+                </div>
+            </div>
+
+            <!-- ABA MISSÕES -->
+            <div id="tab-missoes" class="tab-content">
+                <h2>Mural de Contratos</h2>
+                <div id="quests-list">
+                    <p class="empty-msg">Nenhuma missão disponível no momento.</p>
+                </div>
+            </div>
+
+            <!-- ABA CONSTRUÇÕES -->
+            <div id="tab-construcoes" class="tab-content">
+                <h2>Infraestrutura</h2>
+                <p>Em breve você poderá expandir o Dormitório, Enfermaria e Ferreiro.</p>
+            </div>
+
+        </section>
+    </main>
+
     <!-- CARREGAMENTO DOS SCRIPTS -->
     <script src="js/data.js"></script>
     <script src="js/hero.js"></script>
