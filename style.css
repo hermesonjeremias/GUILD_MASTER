@@ -1,3 +1,125 @@
+/* Reset básico */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #121214;
+    color: #e1e1e6;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* BARRA SUPERIOR */
+#top-bar {
+    background-color: #202024;
+    border-bottom: 2px solid #323238;
+    display: flex;
+    gap: 30px;
+    padding: 15px 25px;
+}
+
+.resource-box {
+    font-size: 1.1rem;
+}
+
+.resource-box .label {
+    color: #8d8d99;
+    margin-right: 5px;
+}
+
+.resource-box .value {
+    color: #00b37e;
+    font-weight: bold;
+}
+
+/* ESTRUTURA DA APLICAÇÃO */
+#app-container {
+    display: flex;
+    flex: 1;
+}
+
+/* MENU LATERAL */
+#sidebar {
+    background-color: #18181b;
+    border-right: 1px solid #323238;
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: #a8a8b3;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 15px 20px;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover {
+    background-color: #29292e;
+    color: #fff;
+}
+
+.nav-btn.active {
+    background-color: #29292e;
+    border-left: 4px solid #00b37e;
+    color: #00b37e;
+    font-weight: bold;
+}
+
+/* PAINEL DE CONTEÚDO */
+#content-panel {
+    flex: 1;
+    padding: 30px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+h2 {
+    border-bottom: 1px solid #323238;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+}
+
+/* BOTÕES DE AÇÃO */
+.action-btn {
+    background-color: #00875f;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    margin-top: 15px;
+    padding: 12px 20px;
+    transition: background-color 0.2s;
+}
+
+.action-btn:hover {
+    background-color: #00b37e;
+}
+
+.empty-msg {
+    color: #7c7c8a;
+    font-style: italic;
+    margin-top: 10px;
+}
+
 /* ESTILOS DOS CARDS DE AVENTUREIROS */
 .hero-card {
     background-color: #202024;
