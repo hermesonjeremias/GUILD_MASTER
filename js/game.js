@@ -5,21 +5,25 @@ function clickGatherGold() {
     updateUI();
 }
 
-// LOOP PRINCIPAL DO JOGO (Roda 10 vezes por segundo)
 let lastTimestamp = Date.now();
 
 function gameLoop() {
     const now = Date.now();
-    const deltaSeconds = (now - lastTimestamp) / 1000; // Tempo em segundos desde o último tick
+    const deltaSeconds = (now - lastTimestamp) / 1000;
     lastTimestamp = now;
 
-    // Atualiza contadores dos heróis (ferimentos)
+    // Atualiza temporizadores de heróis (curas) e de missões
     updateAdventurersTimers(deltaSeconds);
+    updateQuestsTimers(deltaSeconds);
 
-    // Se estivermos na aba de aventureiros, atualizamos a tela para ver o timer de ferimentos rodar
+    // Se estiver na aba ativa correspondente, re-renderiza a tela em tempo real
     const activeTab = document.querySelector('.tab-content.active');
-    if (activeTab && activeTab.id === 'tab-aventureiros') {
-        renderAdventurers();
+    if (activeTab) {
+        if (activeTab.id === 'tab-aventureiros') {
+            renderAdventurers();
+        } else if (activeTab.id === 'tab-missoes') {
+            renderQuests();
+        }
     }
 
     updateUI();
@@ -28,13 +32,13 @@ function gameLoop() {
 function initGame() {
     console.log("Guild Master iniciado com sucesso!");
     
-    // Contrata o herói lendário inicial Aldric
+    // Inicializa missões e recruta Aldric
+    initQuests();
     recruitAldric();
 
     updateUI();
     renderAdventurers();
 
-    // Loop a cada 100ms
     setInterval(gameLoop, 100);
 }
 
