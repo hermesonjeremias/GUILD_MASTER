@@ -10,7 +10,11 @@ let lastTimestamp = 0;
  */
 function gameLoop(timestamp) {
     if (!lastTimestamp) lastTimestamp = timestamp;
-    const deltaSeconds = (timestamp - lastTimestamp) / 1000;
+    
+    // Evita saltos enormes de tempo em abas inativas (máximo 1 segundo por frame)
+    let deltaSeconds = (timestamp - lastTimestamp) / 1000;
+    if (deltaSeconds > 1.0) deltaSeconds = 1.0;
+    
     lastTimestamp = timestamp;
 
     // 1. Atualiza o tempo e progresso das missões ativas
@@ -31,7 +35,7 @@ function gameLoop(timestamp) {
         }
     }
 
-    // 4. Atualiza os marcadores e progresso na interface
+    // 4. Atualiza a interface
     if (typeof updateUI === 'function') {
         updateUI();
     }
