@@ -5,7 +5,7 @@
 let lastTimestamp = 0;
 
 /**
- * Loop principal do jogo executado continuousmente.
+ * Loop principal do jogo executado continuamente.
  * @param {number} timestamp - Marca de tempo enviada pelo requestAnimationFrame
  */
 function gameLoop(timestamp) {
