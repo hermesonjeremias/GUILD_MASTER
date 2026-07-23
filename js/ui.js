@@ -1,5 +1,11 @@
-// js/ui.js - Desenha todos os elementos visuais da interface
+/* ==========================================================================
+   UI.JS - GERENCIADOR DE INTERFACE DO USUÁRIO
+   ========================================================================== */
 
+/**
+ * Aplica um efeito de animação de erro no botão clicado.
+ * @param {HTMLElement} element - Elemento HTML que receberá a animação
+ */
 function triggerErrorEffect(element) {
     if (!element) return;
     element.classList.add('btn-error-shake');
@@ -8,16 +14,26 @@ function triggerErrorEffect(element) {
     }, 400);
 }
 
+/**
+ * Atualiza os marcadores de Ouro, Ouro por Segundo (Gold/s), Prestígio e Membros no topo.
+ */
 function updateUI() {
     const goldElem = document.getElementById('gold-display');
     const prestigeElem = document.getElementById('prestige-display');
     const membersElem = document.getElementById('members-display');
 
-    if (goldElem) goldElem.innerText = Math.floor(gameState.gold);
+    const gps = typeof calculateGoldPerSecond === 'function' ? calculateGoldPerSecond() : 0;
+    const gpsText = gps > 0 ? ` (+${gps.toFixed(1)}/s)` : '';
+
+    if (goldElem) goldElem.innerText = `${Math.floor(gameState.gold)}${gpsText}`;
     if (prestigeElem) prestigeElem.innerText = gameState.prestige;
     if (membersElem) membersElem.innerText = `${gameState.adventurers.length} / ${gameState.maxMembers}`;
 }
 
+/**
+ * Alterna visibilidade entre as abas principais da guilda.
+ * @param {string} tabName - Nome da aba selecionada
+ */
 function switchTab(tabName) {
     const tabs = document.querySelectorAll('.tab-content');
     tabs.forEach(tab => tab.classList.remove('active'));
@@ -43,13 +59,15 @@ function switchTab(tabName) {
     }
 }
 
+/**
+ * Renderiza o painel da taverna de contratação e a lista de heróis.
+ */
 function renderAdventurers() {
     const listContainer = document.getElementById('adventurers-list');
     if (!listContainer) return;
 
     listContainer.innerHTML = '';
 
-    // Verifica capacidade e Gold
     const isFull = gameState.adventurers.length >= gameState.maxMembers;
     const recruitCost = 40;
     const canAffordRecruit = gameState.gold >= recruitCost && !isFull;
@@ -111,7 +129,7 @@ function renderAdventurers() {
                 <div class="xp-bar-container">
                     <div class="xp-bar-fill" style="width: ${(hero.xp / hero.maxXp) * 100}%"></div>
                 </div>
-                <small class="xp-text">XP: ${hero.xp} / ${hero.maxXp}</small>
+                <small class="xp-text">XP: ${Math.floor(hero.xp)} / ${hero.maxXp}</small>
                 ${healButtonHtml}
             </div>
         `;
@@ -119,12 +137,16 @@ function renderAdventurers() {
     });
 }
 
+/**
+ * Renderiza o painel de missões em andamento e os contratos disponíveis.
+ */
 function renderQuests() {
     const listContainer = document.getElementById('quests-list');
     if (!listContainer) return;
 
     listContainer.innerHTML = '';
 
+    // Renderiza missões em andamento se houver
     if (gameState.activeQuests && gameState.activeQuests.length > 0) {
         listContainer.innerHTML += `<h3 class="section-title">Missões em Andamento</h3>`;
         
@@ -146,6 +168,7 @@ function renderQuests() {
         });
     }
 
+    // Renderiza lista de contratos disponíveis
     listContainer.innerHTML += `<h3 class="section-title">Contratos Disponíveis</h3>`;
 
     availableQuestsList.forEach(quest => {
@@ -186,6 +209,9 @@ function renderQuests() {
     });
 }
 
+/**
+ * Atualiza suavemente as barras de progresso das missões sem redesenhar toda a lista.
+ */
 function updateActiveQuestsUI() {
     if (!gameState.activeQuests) return;
 
@@ -201,6 +227,9 @@ function updateActiveQuestsUI() {
     });
 }
 
+/**
+ * Evento disparado ao clicar no botão "Enviar" para uma missão.
+ */
 function handleStartQuestClick(questId, event) {
     const selectElem = document.getElementById(`select-hero-${questId}`);
     if (!selectElem || !selectElem.value) {
@@ -210,6 +239,9 @@ function handleStartQuestClick(questId, event) {
     startQuest(questId, selectElem.value);
 }
 
+/**
+ * Renderiza todas as construções e níveis da guilda na aba de Construções.
+ */
 function renderBuildings() {
     const listContainer = document.getElementById('buildings-list');
     if (!listContainer) return;
@@ -231,7 +263,7 @@ function renderBuildings() {
                 <p class="building-desc">${building.description}</p>
                 <div class="building-action">
                     <button class="action-btn ${btnClass}" onclick="upgradeBuilding('${building.id}', event)">
-                        Evoluir (🪙 ${cost} Ouro)
+                        ${building.level === 0 ? 'Construir' : 'Evoluir'} (🪙 ${cost} Ouro)
                     </button>
                 </div>
             </div>
