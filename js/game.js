@@ -1,48 +1,69 @@
-// js/game.js - Controla o loop principal e salvamento periódico
+/* ==========================================================================
+   GAME.JS - LOOP PRINCIPAL E INICIALIZAÇÃO DO JOGO
+   ========================================================================== */
 
-function clickGatherGold() {
-    gameState.gold += 1;
-    updateUI();
-}
+let lastTimestamp = 0;
 
-let lastTimestamp = Date.now();
-let saveTimer = 0; // Temporizador para salvamento automático
+/**
+ * Loop principal do jogo executado continuousmente.
+ * @param {number} timestamp - Marca de tempo enviada pelo requestAnimationFrame
+ */
+function gameLoop(timestamp) {
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const deltaSeconds = (timestamp - lastTimestamp) / 1000;
+    lastTimestamp = timestamp;
 
-function gameLoop() {
-    const now = Date.now();
-    const deltaSeconds = (now - lastTimestamp) / 1000;
-    lastTimestamp = now;
-
-    // Atualiza temporizadores dos sistemas
-    updateAdventurersTimers(deltaSeconds);
-    updateQuestsTimers(deltaSeconds);
-
-    updateUI();
-    updateActiveQuestsUI();
-
-    // Auto-save a cada 5 segundos
-    saveTimer += deltaSeconds;
-    if (saveTimer >= 5) {
-        saveGame();
-        saveTimer = 0;
+    // 1. Atualiza o tempo e progresso das missões ativas
+    if (typeof updateQuests === 'function') {
+        updateQuests(deltaSeconds);
     }
+
+    // 2. Atualiza temporizadores dos aventureiros (cura de ferimentos e XP passivo do Treinamento)
+    if (typeof updateAdventurersTimers === 'function') {
+        updateAdventurersTimers(deltaSeconds);
+    }
+
+    // 3. Produção passiva de Ouro por segundo (Mural de Contratos)
+    if (typeof calculateGoldPerSecond === 'function') {
+        const gps = calculateGoldPerSecond();
+        if (gps > 0) {
+            gameState.gold += gps * deltaSeconds;
+        }
+    }
+
+    // 4. Atualiza os marcadores e progresso na interface
+    if (typeof updateUI === 'function') {
+        updateUI();
+    }
+    if (typeof updateActiveQuestsUI === 'function') {
+        updateActiveQuestsUI();
+    }
+
+    requestAnimationFrame(gameLoop);
 }
 
-function initGame() {
-    console.log("Guild Master iniciado!");
-    initQuests();
-
-    // Tenta carregar o jogo salvo. Se não existir, inicia com o Aldric
-    const loaded = loadGame();
-    if (!loaded) {
+// Inicialização assim que a página é carregada
+window.addEventListener('DOMContentLoaded', () => {
+    // Carrega os dados salvos do jogo
+    if (typeof loadGame === 'function') {
+        loadGame();
+    }
+    
+    // Garante que o herói inicial Aldric exista
+    if (typeof recruitAldric === 'function') {
         recruitAldric();
     }
 
-    updateUI();
-    renderAdventurers();
-    renderQuests();
+    // Atualiza a UI inicial
+    if (typeof updateUI === 'function') {
+        updateUI();
+    }
 
-    setInterval(gameLoop, 100);
-}
+    // Autosave a cada 10 segundos
+    setInterval(() => {
+        if (typeof saveGame === 'function') saveGame();
+    }, 10000);
 
-window.onload = initGame;
+    // Inicia o loop do jogo
+    requestAnimationFrame(gameLoop);
+});
