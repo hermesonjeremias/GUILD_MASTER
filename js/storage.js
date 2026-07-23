@@ -10,7 +10,13 @@ const STORAGE_KEY = 'guild_manager_save_data';
 function saveGame() {
     try {
         const dataToSave = {
-            gameState: gameState,
+            gameState: {
+                gold: gameState.gold,
+                prestige: gameState.prestige,
+                maxMembers: gameState.maxMembers,
+                adventurers: gameState.adventurers,
+                activeQuests: gameState.activeQuests
+            },
             buildings: availableBuildings.map(b => ({ id: b.id, level: b.level }))
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
@@ -29,17 +35,25 @@ function loadGame() {
     try {
         const parsed = JSON.parse(savedData);
 
-        // Restaura as variáveis do gameState
+        // Restaura as variáveis básicas com garantia de tipo numérico
         if (parsed.gameState) {
-            Object.assign(gameState, parsed.gameState);
+            if (typeof parsed.gameState.gold === 'number') gameState.gold = parsed.gameState.gold;
+            if (typeof parsed.gameState.prestige === 'number') gameState.prestige = parsed.gameState.prestige;
+            if (typeof parsed.gameState.maxMembers === 'number') gameState.maxMembers = parsed.gameState.maxMembers;
 
-            // Reconstrói as instâncias dos heróis para reativar métodos da classe Hero
-            if (Array.isArray(gameState.adventurers)) {
-                gameState.adventurers = gameState.adventurers.map(heroData => {
+            // Restaura e re-instancia os heróis
+            if (Array.isArray(parsed.gameState.adventurers)) {
+                gameState.adventurers = parsed.gameState.adventurers.map(heroData => {
                     const h = new Hero(heroData.id, heroData.name, heroData.heroClass);
                     Object.assign(h, heroData);
+                    // Garante que o objeto de atributos existe e possui valores
+                    if (!h.stats) h.stats = { power: 10, defense: 5, speed: 5 };
                     return h;
                 });
+            }
+
+            if (Array.isArray(parsed.gameState.activeQuests)) {
+                gameState.activeQuests = parsed.gameState.activeQuests;
             }
         }
 
@@ -48,7 +62,7 @@ function loadGame() {
             parsed.buildings.forEach(savedBuilding => {
                 const building = availableBuildings.find(b => b.id === savedBuilding.id);
                 if (building) {
-                    building.level = savedBuilding.level;
+                    building.level = Number(savedBuilding.level) || 0;
                 }
             });
         }
