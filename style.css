@@ -457,3 +457,32 @@ body {
     font-size: 0.8rem;
     margin: 6px 0 10px 0;
 }
+
+/* ==========================================================================
+   11. ESTADOS VISUAIS DE COMPRA (SEM GOLD / ANIMAÇÃO ERRO)
+   ========================================================================== */
+
+/* Botão sem ouro suficiente (Fica escuro, opaco e com cursor desativado) */
+.action-btn.unaffordable {
+    background-color: #29292e !important;
+    color: #7c7c8a !important;
+    border: 1px solid #323238 !important;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Animação de borda vermelha/piscar quando clica sem ouro suficiente */
+@keyframes shake-red {
+    0% { border-color: #f75a68; box-shadow: 0 0 10px rgba(247, 90, 104, 0.8); transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+    100% { border-color: #323238; box-shadow: none; transform: translateX(0); }
+}
+
+.btn-error-shake {
+    animation: shake-red 0.4s ease-in-out !important;
+    border: 1px solid #f75a68 !important;
+}
+
