@@ -1,11 +1,44 @@
-/* ESTILOS DE MISSÕES */
-.section-title {
-    font-size: 1.1rem;
-    color: #00b37e;
-    margin: 20px 0 10px 0;
+/* ESTILOS DE RECRUTAMENTO E CONSTRUÇÕES */
+.recruit-panel {
+    background-color: #202024;
+    border: 1px solid #323238;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    max-width: 500px;
 }
 
-.quest-card {
+.recruit-panel h3 {
+    color: #00b37e;
+    margin-bottom: 5px;
+    font-size: 1.1rem;
+}
+
+.recruit-panel p {
+    color: #8d8d99;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+}
+
+.recruit-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.recruit-buttons .action-btn {
+    margin-top: 0;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+}
+
+.divider {
+    border: 0;
+    border-top: 1px solid #323238;
+    margin: 20px 0;
+}
+
+.building-card {
     background-color: #202024;
     border: 1px solid #323238;
     border-radius: 8px;
@@ -14,88 +47,18 @@
     max-width: 500px;
 }
 
-.quest-card.active-quest-card {
-    border-color: #fba94c;
-    background-color: #28241e;
-}
-
-.quest-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.quest-header h4 {
+.building-header h3 {
     color: #fff;
-    font-size: 1rem;
+    font-size: 1.1rem;
 }
 
-.quest-hero-tag {
-    color: #fba94c;
-    font-size: 0.85rem;
-    font-weight: bold;
+.building-header small {
+    color: #00b37e;
+    font-weight: normal;
 }
 
-.quest-duration {
-    color: #8d8d99;
-    font-size: 0.85rem;
-}
-
-.quest-desc {
+.building-desc {
     color: #c4c4cc;
     font-size: 0.85rem;
-    margin-bottom: 12px;
-}
-
-.quest-rewards {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    font-size: 0.8rem;
-    color: #00b37e;
-    margin-bottom: 15px;
-}
-
-.risk-tag {
-    color: #f75a68;
-}
-
-.quest-action {
-    display: flex;
-    gap: 10px;
-}
-
-.quest-action select {
-    flex: 1;
-    background-color: #121214;
-    border: 1px solid #323238;
-    color: #fff;
-    padding: 8px;
-    border-radius: 4px;
-}
-
-.quest-action button {
-    margin-top: 0;
-    padding: 8px 15px;
-}
-
-.quest-progress-container {
-    background-color: #121214;
-    border-radius: 4px;
-    height: 10px;
-    width: 100%;
-    overflow: hidden;
-    margin-bottom: 5px;
-}
-
-.quest-progress-fill {
-    background-color: #fba94c;
-    height: 100%;
-    transition: width 0.1s linear;
-}
-
-.quest-time {
-    color: #8d8d99;
-    font-size: 0.75rem;
+    margin: 8px 0 12px 0;
 }
