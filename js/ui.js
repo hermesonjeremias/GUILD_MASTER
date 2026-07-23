@@ -25,7 +25,8 @@ function updateUI() {
     const gps = typeof calculateGoldPerSecond === 'function' ? calculateGoldPerSecond() : 0;
     const gpsText = gps > 0 ? ` (+${gps.toFixed(1)}/s)` : '';
 
-    if (goldElem) goldElem.innerText = `${Math.floor(gameState.gold)}${gpsText}`;
+    // Mostra 1 casa decimal para o ouro aumentar em tempo real na tela
+    if (goldElem) goldElem.innerText = `${gameState.gold.toFixed(1)}${gpsText}`;
     if (prestigeElem) prestigeElem.innerText = gameState.prestige;
     if (membersElem) membersElem.innerText = `${gameState.adventurers.length} / ${gameState.maxMembers}`;
 }
