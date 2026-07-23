@@ -42,8 +42,8 @@ function hireAdventurer(heroClass, cost, event) {
     gameState.adventurers.push(newHero);
 
     if (typeof saveGame === 'function') saveGame();
-    updateUI();
-    renderAdventurers();
+    if (typeof updateUI === 'function') updateUI();
+    if (typeof renderAdventurers === 'function') renderAdventurers();
 }
 
 /**
@@ -66,8 +66,8 @@ function healHero(heroId, cost = 15, event) {
     hero.injuryTimer = 0;
 
     if (typeof saveGame === 'function') saveGame();
-    updateUI();
-    renderAdventurers();
+    if (typeof updateUI === 'function') updateUI();
+    if (typeof renderAdventurers === 'function') renderAdventurers();
 }
 
 /**
@@ -80,6 +80,8 @@ function updateAdventurersTimers(deltaSeconds) {
 
     const trainingLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('training_hall') : 0;
 
+    if (!Array.isArray(gameState.adventurers)) return;
+
     gameState.adventurers.forEach(hero => {
         // Redução do tempo de cura
         if (hero.status === "injured") {
@@ -87,7 +89,7 @@ function updateAdventurersTimers(deltaSeconds) {
             if (hero.injuryTimer <= 0) {
                 hero.injuryTimer = 0;
                 hero.status = "available";
-                renderAdventurers();
+                if (typeof renderAdventurers === 'function') renderAdventurers();
             }
         }
 
@@ -107,14 +109,19 @@ function updateAdventurersTimers(deltaSeconds) {
  */
 function calculateGoldPerSecond() {
     const contractBoardLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('contract_board') : 0;
-    if (contractBoardLevel === 0) return 0;
+    if (contractBoardLevel <= 0) return 0;
 
-    // Soma o poder de todos os heróis da guilda com validação
+    if (!Array.isArray(gameState.adventurers) || gameState.adventurers.length === 0) return 0;
+
+    // Soma o poder de todos os heróis da guilda
     const totalPower = gameState.adventurers.reduce((sum, hero) => {
-        const power = (hero.stats && typeof hero.stats.power === 'number') ? hero.stats.power : 10;
-        return sum + power;
+        let p = 10;
+        if (hero && hero.stats && typeof hero.stats.power === 'number') {
+            p = hero.stats.power;
+        }
+        return sum + p;
     }, 0);
-    
-    // Cada nível do Mural gera 20% do Poder em Ouro por segundo
+
+    // Renda = Poder Total * Nível do Mural * 0.2 Ouro/s
     return totalPower * contractBoardLevel * 0.2;
 }
