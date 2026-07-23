@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guild Master - Idle Management</title>
-    <!-- Carrega o CSS global -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- BARRA SUPERIOR: Exibe recursos principais -->
     <header id="top-bar">
         <div class="resource-box">
             <span class="label">Ouro:</span>
@@ -25,9 +23,7 @@
         </div>
     </header>
 
-    <!-- ÁREA PRINCIPAL DO JOGO -->
     <main id="app-container">
-        <!-- MENU LATERAL -->
         <nav id="sidebar">
             <button class="nav-btn active" onclick="switchTab('guilda')">🏰 Guilda</button>
             <button class="nav-btn" onclick="switchTab('aventureiros')">⚔️ Aventureiros</button>
@@ -35,49 +31,43 @@
             <button class="nav-btn" onclick="switchTab('construcoes')">🏗️ Construções</button>
         </nav>
 
-        <!-- PAINEL DE CONTEÚDO -->
         <section id="content-panel">
             
-            <!-- ABA GUILDA -->
             <div id="tab-guilda" class="tab-content active">
                 <h2>Administração da Guilda</h2>
                 <p>Bem-vindo, Mestre da Guilda! Clique abaixo para arrecadar fundos e começar o seu império.</p>
                 <button class="action-btn" onclick="clickGatherGold()">Coletar Impostos (+1 Ouro)</button>
+
+                <hr class="divider">
+                <h3>Opções do Jogo</h3>
+                <button class="action-btn reset-btn" onclick="resetGameData()">⚠️ Reiniciar Todo o Progresso</button>
             </div>
 
-            <!-- ABA AVENTUREIROS -->
             <div id="tab-aventureiros" class="tab-content">
                 <h2>Seus Aventureiros</h2>
-                <div id="adventurers-list">
-                    <!-- Gerado dinamicamente pelo JS -->
-                </div>
+                <div id="adventurers-list"></div>
             </div>
 
-            <!-- ABA MISSÕES -->
             <div id="tab-missoes" class="tab-content">
                 <h2>Mural de Contratos</h2>
-                <div id="quests-list">
-                    <!-- Gerado dinamicamente pelo JS -->
-                </div>
+                <div id="quests-list"></div>
             </div>
 
-            <!-- ABA CONSTRUÇÕES -->
             <div id="tab-construcoes" class="tab-content">
                 <h2>Infraestrutura da Guilda</h2>
-                <div id="buildings-list">
-                    <!-- Gerado dinamicamente pelo JS -->
-                </div>
+                <div id="buildings-list"></div>
             </div>
 
         </section>
     </main>
 
-    <!-- IMPORTAÇÃO DOS SCRIPTS (A ordem é fundamental) -->
+    <!-- SCRIPTS (Ordem de Dependência) -->
     <script src="js/data.js"></script>
     <script src="js/hero.js"></script>
+    <script src="js/storage.js"></script> <!-- NOVO SCRIPT DE SALVAMENTO -->
     <script src="js/adventurers.js"></script>
     <script src="js/quests.js"></script>
-    <script src="js/buildings.js"></script> <!-- NOVO SCRIPT -->
+    <script src="js/buildings.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/game.js"></script>
 </body>
