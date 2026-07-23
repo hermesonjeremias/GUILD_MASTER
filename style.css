@@ -6,7 +6,7 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    -webkit-tap-highlight-color: transparent; /* Remove o destaque de toque no mobile */
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -15,7 +15,8 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    overflow: hidden; /* Evita rolagem da página inteira; a rolagem fica no painel */
+    height: -webkit-fill-available; /* Ajuste especial para navegação mobile */
+    overflow: hidden;
 }
 
 /* ==========================================================================
@@ -27,41 +28,43 @@ body {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 12px;
-    height: 60px;
+    padding: 10px 5px;
+    min-height: 55px;
+    flex-shrink: 0; /* Impede a barra de encolher no mobile */
 }
 
 .resource-box {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .resource-box .label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #8d8d99;
     font-weight: 600;
 }
 
 .resource-box .value {
-    font-size: 1.1rem;
-    color: #fba94c; /* Dourado/Laranja */
+    font-size: 1rem;
+    color: #fba94c;
     font-weight: bold;
 }
 
 /* ==========================================================================
-   3. ESTRUTURA PRINCIPAL E LAYOUT
+   3. ESTRUTURA PRINCIPAL E LAYOUT MOBILE
    ========================================================================== */
 #app-container {
     display: flex;
     flex: 1;
+    flex-direction: column; /* No celular, fluxo natural de cima para baixo */
     overflow: hidden;
 }
 
-/* Layout responsivo para celular (Menu na parte inferior ou empilhado) */
-@media (max-width: 768px) {
+/* Em telas maiores (Computadores/Tablets), coloca o menu na esquerda */
+@media (min-width: 769px) {
     #app-container {
-        flex-direction: column-reverse; /* Coloca o menu de navegação embaixo no celular */
+        flex-direction: row;
     }
 }
 
@@ -69,22 +72,24 @@ body {
    4. MENU DE NAVEGAÇÃO (SIDEBAR / NAV)
    ========================================================================== */
 #sidebar {
-    background-color: #121214;
-    border-right: 1px solid #323238;
+    background-color: #1a1a1e;
+    border-bottom: 2px solid #323238;
     display: flex;
-    flex-direction: column;
-    width: 200px;
-    padding: 10px;
-    gap: 8px;
+    flex-direction: row; /* Botões lado a lado no celular */
+    padding: 8px;
+    gap: 6px;
+    flex-shrink: 0; /* Garante que o menu sempre fique visível */
+    overflow-x: auto; /* Permite rolar os botões se a tela for muito estreita */
 }
 
-@media (max-width: 768px) {
+@media (min-width: 769px) {
     #sidebar {
-        width: 100%;
-        flex-direction: row;
-        border-right: none;
-        border-top: 1px solid #323238;
-        padding: 8px;
+        width: 200px;
+        flex-direction: column;
+        border-bottom: none;
+        border-right: 1px solid #323238;
+        padding: 12px;
+        gap: 8px;
     }
 }
 
@@ -92,17 +97,18 @@ body {
     background-color: #202024;
     border: 1px solid #323238;
     color: #a8a8b3;
-    padding: 12px;
+    padding: 10px 8px;
     border-radius: 6px;
-    text-align: left;
-    font-size: 0.95rem;
+    text-align: center;
+    font-size: 0.85rem;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
     flex: 1;
+    white-space: nowrap; /* Evita que o texto do botão quebre em duas linhas */
 }
 
-.nav-btn:hover {
+.nav-btn:hover, .nav-btn:active {
     background-color: #29292e;
     color: #ffffff;
 }
@@ -118,9 +124,10 @@ body {
    ========================================================================== */
 #content-panel {
     flex: 1;
-    padding: 20px;
-    overflow-y: auto; /* Rolagem independente apenas no conteúdo */
+    padding: 15px;
+    overflow-y: auto; /* Conteúdo rola perfeitamente se passar da tela */
     background-color: #121214;
+    -webkit-overflow-scrolling: touch; /* ROLAGEM SUAVE NO CELULAR (iOS/Android) */
 }
 
 .tab-content {
@@ -132,21 +139,22 @@ body {
 }
 
 .tab-content h2 {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     color: #00b37e;
-    font-size: 1.4rem;
+    font-size: 1.25rem;
 }
 
 .tab-content p {
     color: #c4c4cc;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
     line-height: 1.4;
 }
 
 .section-title {
     color: #8d8d99;
-    font-size: 1rem;
-    margin: 20px 0 10px 0;
+    font-size: 0.9rem;
+    margin: 16px 0 8px 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -154,12 +162,13 @@ body {
 .empty-msg {
     color: #7c7c8a;
     font-style: italic;
+    font-size: 0.9rem;
 }
 
 .divider {
     border: 0;
     border-top: 1px solid #323238;
-    margin: 20px 0;
+    margin: 16px 0;
 }
 
 /* ==========================================================================
@@ -169,15 +178,16 @@ body {
     background-color: #00875f;
     color: #ffffff;
     border: none;
-    padding: 10px 16px;
+    padding: 10px 14px;
     border-radius: 6px;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s;
+    touch-action: manipulation;
 }
 
-.action-btn:hover {
+.action-btn:active {
     background-color: #00b37e;
 }
 
@@ -187,23 +197,15 @@ body {
     cursor: not-allowed;
 }
 
-/* Botão de Cura */
 .heal-btn {
     background-color: #2e7d32;
     margin-top: 10px;
     width: 100%;
 }
-.heal-btn:hover {
-    background-color: #1b5e20;
-}
 
-/* Botão de Reset de Save */
 .reset-btn {
     background-color: #c62828;
     margin-top: 10px;
-}
-.reset-btn:hover {
-    background-color: #8e0000;
 }
 
 /* ==========================================================================
@@ -213,33 +215,33 @@ body {
     background-color: #202024;
     border: 1px solid #323238;
     border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 12px;
-    max-width: 500px;
+    padding: 12px;
+    margin-bottom: 10px;
+    width: 100%;
 }
 
 .hero-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .hero-header h3 {
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: #ffffff;
 }
 
 .hero-header h3 small {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #8d8d99;
     font-weight: normal;
 }
 
 .badge {
-    padding: 4px 8px;
+    padding: 4px 6px;
     border-radius: 4px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: bold;
 }
 
@@ -260,30 +262,30 @@ body {
 
 .hero-stats {
     display: flex;
-    gap: 12px;
-    font-size: 0.85rem;
+    gap: 10px;
+    font-size: 0.8rem;
     color: #c4c4cc;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .xp-bar-container {
     width: 100%;
-    height: 8px;
+    height: 6px;
     background-color: #121214;
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
     margin-bottom: 4px;
 }
 
 .xp-bar-fill {
     height: 100%;
-    background-color: #9b51e0; /* Roxo para XP */
+    background-color: #9b51e0;
     width: 0%;
     transition: width 0.3s ease;
 }
 
 .xp-text {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #8d8d99;
 }
 
@@ -294,33 +296,33 @@ body {
     background-color: #202024;
     border: 1px solid #323238;
     border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 20px;
-    max-width: 500px;
+    padding: 12px;
+    margin-bottom: 16px;
+    width: 100%;
 }
 
 .recruit-panel h3 {
     color: #00b37e;
-    margin-bottom: 5px;
-    font-size: 1.1rem;
+    margin-bottom: 4px;
+    font-size: 1rem;
 }
 
 .recruit-panel p {
     color: #8d8d99;
-    font-size: 0.85rem;
-    margin-bottom: 12px;
+    font-size: 0.8rem;
+    margin-bottom: 10px;
 }
 
 .recruit-buttons {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 botões por linha no celular */
     gap: 8px;
-    flex-wrap: wrap;
 }
 
 .recruit-buttons .action-btn {
     margin-top: 0;
-    font-size: 0.85rem;
-    padding: 8px 12px;
+    font-size: 0.8rem;
+    padding: 8px 6px;
 }
 
 /* ==========================================================================
@@ -330,41 +332,41 @@ body {
     background-color: #202024;
     border: 1px solid #323238;
     border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-    max-width: 500px;
+    padding: 12px;
+    margin-bottom: 12px;
+    width: 100%;
 }
 
 .quest-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .quest-header h4 {
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: #ffffff;
 }
 
 .quest-duration {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #8d8d99;
 }
 
 .quest-desc {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #c4c4cc;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .quest-rewards {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #fba94c;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .risk-tag {
@@ -373,7 +375,7 @@ body {
 
 .quest-action {
     display: flex;
-    gap: 10px;
+    gap: 8px;
 }
 
 .quest-action select {
@@ -383,12 +385,12 @@ body {
     color: #e1e1e6;
     padding: 8px;
     border-radius: 6px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     outline: none;
 }
 
 .quest-hero-tag {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #00b37e;
     font-weight: bold;
 }
@@ -400,11 +402,11 @@ body {
 
 .quest-progress-container {
     width: 100%;
-    height: 10px;
+    height: 8px;
     background-color: #121214;
-    border-radius: 5px;
+    border-radius: 4px;
     overflow: hidden;
-    margin: 10px 0 6px 0;
+    margin: 8px 0 4px 0;
 }
 
 .quest-progress-fill {
@@ -415,7 +417,7 @@ body {
 }
 
 .quest-time {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #8d8d99;
 }
 
@@ -426,14 +428,14 @@ body {
     background-color: #202024;
     border: 1px solid #323238;
     border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-    max-width: 500px;
+    padding: 12px;
+    margin-bottom: 12px;
+    width: 100%;
 }
 
 .building-header h3 {
     color: #ffffff;
-    font-size: 1.1rem;
+    font-size: 1rem;
 }
 
 .building-header small {
@@ -443,6 +445,6 @@ body {
 
 .building-desc {
     color: #c4c4cc;
-    font-size: 0.85rem;
-    margin: 8px 0 12px 0;
+    font-size: 0.8rem;
+    margin: 6px 0 10px 0;
 }
