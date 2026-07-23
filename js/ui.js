@@ -2,43 +2,64 @@
 
 // Atualiza contadores numéricos do topo da tela
 function updateUI() {
-    document.getElementById('gold-display').innerText = Math.floor(gameState.gold); // Exibe o ouro atual
-    document.getElementById('prestige-display').innerText = gameState.prestige; // Exibe o prestígio
-    document.getElementById('members-display').innerText = `${gameState.adventurers.length} / ${gameState.maxMembers}`; // Exibe quantidade de membros/limite
+    const goldElem = document.getElementById('gold-display');
+    const prestigeElem = document.getElementById('prestige-display');
+    const membersElem = document.getElementById('members-display');
+
+    if (goldElem) goldElem.innerText = Math.floor(gameState.gold);
+    if (prestigeElem) prestigeElem.innerText = gameState.prestige;
+    if (membersElem) membersElem.innerText = `${gameState.adventurers.length} / ${gameState.maxMembers}`;
 }
 
 // Alterna a exibição das abas
 function switchTab(tabName) {
-    const tabs = document.querySelectorAll('.tab-content'); // Seleciona todas as seções de abas
-    tabs.forEach(tab => tab.classList.remove('active')); // Oculta todas
+    console.log("Alternando para a aba:", tabName);
 
-    const buttons = document.querySelectorAll('.nav-btn'); // Seleciona todos os botões
-    buttons.forEach(btn => btn.classList.remove('active')); // Desmarca todos
+    // 1. Esconde todas as abas
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => tab.classList.remove('active'));
 
-    const activeTab = document.getElementById(`tab-${tabName}`); // Pega a aba selecionada
-    if (activeTab) activeTab.classList.add('active'); // Torna a aba visível
+    // 2. Desmarca todos os botões do menu
+    const buttons = document.querySelectorAll('.nav-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
 
-    const clickedBtn = Array.from(buttons).find(btn => btn.getAttribute('onclick').includes(tabName));
-    if (clickedBtn) clickedBtn.classList.add('active'); // Destaca o botão do menu
+    // 3. Mostra a aba clicada
+    const activeTab = document.getElementById(`tab-${tabName}`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+    } else {
+        console.error(`Aba #tab-${tabName} não foi encontrada no HTML!`);
+    }
 
-    // Executa a função de desenho correspondente à aba aberta
+    // 4. Marca o botão selecionado
+    const clickedBtn = Array.from(buttons).find(btn => {
+        const onclickAttr = btn.getAttribute('onclick');
+        return onclickAttr && onclickAttr.includes(tabName);
+    });
+    if (clickedBtn) clickedBtn.classList.add('active');
+
+    // 5. Executa a função de renderização da aba correspondente
     if (tabName === 'aventureiros') {
         renderAdventurers();
     } else if (tabName === 'missoes') {
         renderQuests();
     } else if (tabName === 'construcoes') {
-        renderBuildings();
+        if (typeof renderBuildings === 'function') {
+            renderBuildings();
+        } else {
+            console.error("A função renderBuildings() não existe! Verifique se o js/buildings.js foi carregado corretamente.");
+        }
     }
 }
 
 // Renderiza os heróis e a área de recrutamento
 function renderAdventurers() {
-    const listContainer = document.getElementById('adventurers-list'); // Localiza o contêiner
+    const listContainer = document.getElementById('adventurers-list');
     if (!listContainer) return;
 
-    listContainer.innerHTML = ''; // Limpa o conteúdo
+    listContainer.innerHTML = '';
 
-    // HTML do painel da Taverna de Recrutamento
+    // Painel da Taverna de Recrutamento
     const recruitPanelHtml = `
         <div class="recruit-panel">
             <h3>Taverna de Recrutamento</h3>
@@ -52,14 +73,13 @@ function renderAdventurers() {
         </div>
         <hr class="divider">
     `;
-    listContainer.innerHTML = recruitPanelHtml; // Insere o painel no início da lista
+    listContainer.innerHTML = recruitPanelHtml;
 
     if (gameState.adventurers.length === 0) {
         listContainer.innerHTML += '<p class="empty-msg">Nenhum aventureiro contratado ainda.</p>';
         return;
     }
 
-    // Desenha o card individual de cada herói
     gameState.adventurers.forEach(hero => {
         let statusBadge = '';
         if (hero.status === 'available') {
@@ -87,7 +107,7 @@ function renderAdventurers() {
                 <small class="xp-text">XP: ${hero.xp} / ${hero.maxXp}</small>
             </div>
         `;
-        listContainer.innerHTML += cardHtml; // Adiciona o card do herói
+        listContainer.innerHTML += cardHtml;
     });
 }
 
@@ -98,7 +118,6 @@ function renderQuests() {
 
     listContainer.innerHTML = '';
 
-    // 1. Renderiza missões ativas em andamento
     if (gameState.activeQuests && gameState.activeQuests.length > 0) {
         listContainer.innerHTML += `<h3 class="section-title">Missões em Andamento</h3>`;
         
@@ -120,7 +139,6 @@ function renderQuests() {
         });
     }
 
-    // 2. Renderiza contratos disponíveis para contratação
     listContainer.innerHTML += `<h3 class="section-title">Contratos Disponíveis</h3>`;
 
     availableQuestsList.forEach(quest => {
@@ -187,16 +205,19 @@ function handleStartQuestClick(questId) {
     startQuest(questId, selectElem.value);
 }
 
-// Renderiza os prédios e melhorias da guilda na aba Construções
+// Renderiza os prédios e melhorias na aba Construções
 function renderBuildings() {
-    const listContainer = document.getElementById('buildings-list'); // Pega o contêiner
+    const listContainer = document.getElementById('buildings-list');
     if (!listContainer) return;
 
-    listContainer.innerHTML = ''; // Limpa o contêiner
+    listContainer.innerHTML = '';
 
-    // Percorre cada construção disponível na lista
+    if (typeof availableBuildings === 'undefined') {
+        listContainer.innerHTML = '<p class="empty-msg">Erro: Lista de construções não carregada.</p>';
+        return;
+    }
+
     availableBuildings.forEach(building => {
-        // Calcula o custo com base na fórmula exponencial do nível
         const cost = Math.floor(building.baseCost * Math.pow(building.costMultiplier, building.level));
 
         const cardHtml = `
@@ -212,6 +233,6 @@ function renderBuildings() {
                 </div>
             </div>
         `;
-        listContainer.innerHTML += cardHtml; // Insere o card da construção
+        listContainer.innerHTML += cardHtml;
     });
 }
