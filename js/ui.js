@@ -1,274 +1,136 @@
 /* ==========================================================================
-   UI.JS - GERENCIADOR DE INTERFACE DO USUÁRIO
+   UI.JS - MANIPULAÇÃO E ATUALIZAÇÃO DA INTERFACE DO USUÁRIO
    ========================================================================== */
 
-/**
- * Aplica um efeito de animação de erro no botão clicado.
- * @param {HTMLElement} element - Elemento HTML que receberá a animação
- */
-function triggerErrorEffect(element) {
-    if (!element) return;
-    element.classList.add('btn-error-shake');
-    setTimeout(() => {
-        element.classList.remove('btn-error-shake');
-    }, 400);
-}
-
-/**
- * Atualiza os marcadores de Ouro, Ouro por Segundo (Gold/s), Prestígio e Membros no topo.
- */
 function updateUI() {
-    const goldElem = document.getElementById('gold-display');
-    const prestigeElem = document.getElementById('prestige-display');
-    const membersElem = document.getElementById('members-display');
+    // Garante conversão numérica na exibição
+    const goldDisplay = document.getElementById("gold-display");
+    if (goldDisplay) {
+        const goldVal = Number(gameState.gold) || 0;
+        goldDisplay.textContent = Math.floor(goldVal).toLocaleString();
+    }
 
-    const gps = typeof calculateGoldPerSecond === 'function' ? calculateGoldPerSecond() : 0;
-    const gpsText = gps > 0 ? ` (+${gps.toFixed(1)}/s)` : '';
+    const prestigeDisplay = document.getElementById("prestige-display");
+    if (prestigeDisplay) {
+        prestigeDisplay.textContent = Math.floor(Number(gameState.prestige) || 0);
+    }
 
-    // Mostra 1 casa decimal para o ouro aumentar em tempo real na tela
-    if (goldElem) goldElem.innerText = `${gameState.gold.toFixed(1)}${gpsText}`;
-    if (prestigeElem) prestigeElem.innerText = gameState.prestige;
-    if (membersElem) membersElem.innerText = `${gameState.adventurers.length} / ${gameState.maxMembers}`;
-}
+    const membersDisplay = document.getElementById("members-display");
+    if (membersDisplay) {
+        const count = Array.isArray(gameState.adventurers) ? gameState.adventurers.length : 0;
+        membersDisplay.textContent = `${count}/${gameState.maxMembers || 4}`;
+    }
 
-/**
- * Alterna visibilidade entre as abas principais da guilda.
- * @param {string} tabName - Nome da aba selecionada
- */
-function switchTab(tabName) {
-    const tabs = document.querySelectorAll('.tab-content');
-    tabs.forEach(tab => tab.classList.remove('active'));
-
-    const buttons = document.querySelectorAll('.nav-btn');
-    buttons.forEach(btn => btn.classList.remove('active'));
-
-    const activeTab = document.getElementById(`tab-${tabName}`);
-    if (activeTab) activeTab.classList.add('active');
-
-    const clickedBtn = Array.from(buttons).find(btn => {
-        const onclickAttr = btn.getAttribute('onclick');
-        return onclickAttr && onclickAttr.includes(tabName);
-    });
-    if (clickedBtn) clickedBtn.classList.add('active');
-
-    if (tabName === 'aventureiros') {
-        renderAdventurers();
-    } else if (tabName === 'missoes') {
-        renderQuests();
-    } else if (tabName === 'construcoes') {
-        renderBuildings();
+    const gpsDisplay = document.getElementById("gps-display");
+    if (gpsDisplay && typeof calculateGoldPerSecond === 'function') {
+        const gps = calculateGoldPerSecond();
+        gpsDisplay.textContent = gps.toFixed(1);
     }
 }
 
-/**
- * Renderiza o painel da taverna de contratação e a lista de heróis.
- */
-function renderAdventurers() {
-    const listContainer = document.getElementById('adventurers-list');
-    if (!listContainer) return;
-
-    listContainer.innerHTML = '';
-
-    const isFull = gameState.adventurers.length >= gameState.maxMembers;
-    const recruitCost = 40;
-    const canAffordRecruit = gameState.gold >= recruitCost && !isFull;
-    const recruitBtnClass = canAffordRecruit ? '' : 'unaffordable';
-
-    const recruitPanelHtml = `
-        <div class="recruit-panel">
-            <h3>Taverna de Recrutamento</h3>
-            <p>Contrate novos aventureiros para a guilda (Custo: ${recruitCost} Ouro):</p>
-            <div class="recruit-buttons">
-                <button class="action-btn ${recruitBtnClass}" onclick="hireAdventurer('Guerreiro', ${recruitCost}, event)">🛡️ Guerreiro</button>
-                <button class="action-btn ${recruitBtnClass}" onclick="hireAdventurer('Mago', ${recruitCost}, event)">🔮 Mago</button>
-                <button class="action-btn ${recruitBtnClass}" onclick="hireAdventurer('Padre', ${recruitCost}, event)">✨ Padre</button>
-                <button class="action-btn ${recruitBtnClass}" onclick="hireAdventurer('Arqueiro', ${recruitCost}, event)">🏹 Arqueiro</button>
-            </div>
-        </div>
-        <hr class="divider">
-    `;
-    listContainer.innerHTML = recruitPanelHtml;
-
-    if (gameState.adventurers.length === 0) {
-        listContainer.innerHTML += '<p class="empty-msg">Nenhum aventureiro contratado ainda.</p>';
-        return;
-    }
-
-    gameState.adventurers.forEach(hero => {
-        let statusBadge = '';
-        let healButtonHtml = '';
-
-        if (hero.status === 'available') {
-            statusBadge = '<span class="badge available">Pronto</span>';
-        } else if (hero.status === 'on_quest') {
-            statusBadge = '<span class="badge on-quest">Em Missão</span>';
-        } else if (hero.status === 'injured') {
-            statusBadge = `<span class="badge injured">Ferido (${Math.ceil(hero.injuryTimer)}s)</span>`;
-            
-            const healCost = 15;
-            const canAffordHeal = gameState.gold >= healCost;
-            const healBtnClass = canAffordHeal ? '' : 'unaffordable';
-
-            healButtonHtml = `
-                <button class="action-btn heal-btn ${healBtnClass}" onclick="healHero('${hero.id}', ${healCost}, event)">
-                    🧪 Curar Instantaneamente (🪙 ${healCost} Ouro)
-                </button>
-            `;
-        }
-
-        const cardHtml = `
-            <div class="hero-card">
-                <div class="hero-header">
-                    <h3>${hero.name} <small>Nv. ${hero.level} ${hero.heroClass}</small></h3>
-                    ${statusBadge}
-                </div>
-                <div class="hero-stats">
-                    <span>⚔️ Poder: ${hero.stats.power}</span>
-                    <span>🛡️ Defesa: ${hero.stats.defense}</span>
-                    <span>⚡ Vel: ${hero.stats.speed}</span>
-                </div>
-                <div class="xp-bar-container">
-                    <div class="xp-bar-fill" style="width: ${(hero.xp / hero.maxXp) * 100}%"></div>
-                </div>
-                <small class="xp-text">XP: ${Math.floor(hero.xp)} / ${hero.maxXp}</small>
-                ${healButtonHtml}
-            </div>
-        `;
-        listContainer.innerHTML += cardHtml;
-    });
-}
-
-/**
- * Renderiza o painel de missões em andamento e os contratos disponíveis.
- */
 function renderQuests() {
-    const listContainer = document.getElementById('quests-list');
-    if (!listContainer) return;
+    const container = document.getElementById("quests-container");
+    if (!container) return;
 
-    listContainer.innerHTML = '';
+    container.innerHTML = "";
 
-    // Renderiza missões em andamento se houver
-    if (gameState.activeQuests && gameState.activeQuests.length > 0) {
-        listContainer.innerHTML += `<h3 class="section-title">Missões em Andamento</h3>`;
-        
-        gameState.activeQuests.forEach(quest => {
-            const progressPercent = ((quest.duration - quest.timeRemaining) / quest.duration) * 100;
-            const cardHtml = `
-                <div class="quest-card active-quest-card" id="active-quest-card-${quest.id}">
-                    <div class="quest-header">
-                        <h4>${quest.title}</h4>
-                        <span class="quest-hero-tag">⚔️ ${quest.heroName}</span>
-                    </div>
-                    <div class="quest-progress-container">
-                        <div class="quest-progress-fill" id="progress-fill-${quest.id}" style="width: ${progressPercent}%"></div>
-                    </div>
-                    <small class="quest-time" id="quest-time-${quest.id}">Tempo restante: ${Math.ceil(quest.timeRemaining)}s</small>
-                </div>
-            `;
-            listContainer.innerHTML += cardHtml;
-        });
-    }
-
-    // Renderiza lista de contratos disponíveis
-    listContainer.innerHTML += `<h3 class="section-title">Contratos Disponíveis</h3>`;
+    if (typeof availableQuestsList === 'undefined' || !Array.isArray(availableQuestsList)) return;
 
     availableQuestsList.forEach(quest => {
-        const availableHeroes = gameState.adventurers.filter(h => h.status === 'available');
-        
-        let selectOptions = `<option value="">Selecione um Herói...</option>`;
-        availableHeroes.forEach(h => {
-            selectOptions += `<option value="${h.id}">${h.name} (Nv. ${h.level} ${h.heroClass})</option>`;
-        });
+        const card = document.createElement("div");
+        card.className = "quest-card";
 
-        const isHeroAvailable = availableHeroes.length > 0;
+        // Busca heróis realmente disponíveis
+        const availableHeroes = gameState.adventurers.filter(h => h.status === "available");
 
-        const questCardHtml = `
-            <div class="quest-card">
-                <div class="quest-header">
-                    <h4>${quest.title}</h4>
-                    <span class="quest-duration">⏳ ${quest.duration}s</span>
-                </div>
-                <p class="quest-desc">${quest.description}</p>
-                <div class="quest-rewards">
-                    <span>🪙 +${quest.goldReward} Ouro</span>
-                    <span>⭐ +${quest.xpReward} XP</span>
-                    <span>👑 +${quest.prestigeReward} Prestígio</span>
-                    <span class="risk-tag">⚠️ Risco: ${quest.injuryChance * 100}%</span>
-                </div>
-                <div class="quest-action">
-                    <select id="select-hero-${quest.id}" ${!isHeroAvailable ? 'disabled' : ''}>
-                        ${selectOptions}
-                    </select>
-                    <button class="action-btn" ${!isHeroAvailable ? 'disabled' : ''} 
-                        onclick="handleStartQuestClick('${quest.id}', event)">
-                        Enviar
-                    </button>
-                </div>
+        let selectHTML = "";
+        if (availableHeroes.length > 0) {
+            selectHTML = `<select id="select-hero-${quest.id}" class="hero-select">
+                ${availableHeroes.map(h => `<option value="${h.id}">${h.name} (${h.heroClass})</option>`).join('')}
+            </select>`;
+        } else {
+            selectHTML = `<select class="hero-select" disabled><option>Nenhum herói disponível</option></select>`;
+        }
+
+        const btnDisabled = availableHeroes.length === 0 ? "disabled" : "";
+
+        card.innerHTML = `
+            <h3>${quest.title}</h3>
+            <p>${quest.description}</p>
+            <div class="quest-details">
+                <span>⏱️ ${quest.duration}s</span>
+                <span>🪙 +${quest.goldReward}</span>
+                <span>⭐ +${quest.xpReward} XP</span>
+            </div>
+            <div class="quest-actions">
+                ${selectHTML}
+                <button class="btn-primary" ${btnDisabled} onclick="handleStartQuestClick('${quest.id}')">Iniciar</button>
             </div>
         `;
-        listContainer.innerHTML += questCardHtml;
+
+        container.appendChild(card);
     });
 }
 
 /**
- * Atualiza suavemente as barras de progresso das missões sem redesenhar toda a lista.
+ * Captura o clique no botão de iniciar missão e pega o ID do herói selecionado
  */
-function updateActiveQuestsUI() {
-    if (!gameState.activeQuests) return;
-
-    gameState.activeQuests.forEach(quest => {
-        const fillElem = document.getElementById(`progress-fill-${quest.id}`);
-        const timeElem = document.getElementById(`quest-time-${quest.id}`);
-
-        if (fillElem && timeElem) {
-            const progressPercent = ((quest.duration - quest.timeRemaining) / quest.duration) * 100;
-            fillElem.style.width = `${progressPercent}%`;
-            timeElem.innerText = `Tempo restante: ${Math.ceil(quest.timeRemaining)}s`;
-        }
-    });
-}
-
-/**
- * Evento disparado ao clicar no botão "Enviar" para uma missão.
- */
-function handleStartQuestClick(questId, event) {
+function handleStartQuestClick(questId) {
     const selectElem = document.getElementById(`select-hero-${questId}`);
-    if (!selectElem || !selectElem.value) {
-        triggerErrorEffect(event ? event.currentTarget : null);
+    if (!selectElem || !selectElem.value) return;
+
+    const selectedHeroId = selectElem.value;
+    if (typeof startQuest === 'function') {
+        startQuest(questId, selectedHeroId);
+    }
+}
+
+function renderAdventurers() {
+    const container = document.getElementById("adventurers-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    if (!Array.isArray(gameState.adventurers)) return;
+
+    gameState.adventurers.forEach(hero => {
+        const card = document.createElement("div");
+        card.className = `hero-card status-${hero.status}`;
+
+        let statusText = "Disponível";
+        if (hero.status === "on_quest") statusText = "Em Missão";
+        if (hero.status === "injured") statusText = `Ferido (${Math.ceil(hero.injuryTimer || 0)}s)`;
+
+        card.innerHTML = `
+            <h4>${hero.name}</h4>
+            <p>Classe: ${hero.heroClass} | Nível: ${hero.level || 1}</p>
+            <p>Poder: ${hero.stats ? hero.stats.power : 10}</p>
+            <p class="status-badge status-${hero.status}">${statusText}</p>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+function updateActiveQuestsUI() {
+    const container = document.getElementById("active-quests-container");
+    if (!container) return;
+
+    if (!Array.isArray(gameState.activeQuests) || gameState.activeQuests.length === 0) {
+        container.innerHTML = "<p>Nenhuma missão em andamento.</p>";
         return;
     }
-    startQuest(questId, selectElem.value);
+
+    container.innerHTML = gameState.activeQuests.map(q => `
+        <div class="active-quest-item">
+            <span><strong>${q.title}</strong> (${q.heroName})</span>
+            <span>⏱️ ${Math.max(0, Math.ceil(q.timeRemaining))}s</span>
+        </div>
+    `).join('');
 }
 
-/**
- * Renderiza todas as construções e níveis da guilda na aba de Construções.
- */
-function renderBuildings() {
-    const listContainer = document.getElementById('buildings-list');
-    if (!listContainer) return;
-
-    listContainer.innerHTML = '';
-
-    if (typeof availableBuildings === 'undefined') return;
-
-    availableBuildings.forEach(building => {
-        const cost = Math.floor(building.baseCost * Math.pow(building.costMultiplier, building.level));
-        const canAfford = gameState.gold >= cost;
-        const btnClass = canAfford ? '' : 'unaffordable';
-
-        const cardHtml = `
-            <div class="building-card">
-                <div class="building-header">
-                    <h3>${building.name} <small>Nível ${building.level}</small></h3>
-                </div>
-                <p class="building-desc">${building.description}</p>
-                <div class="building-action">
-                    <button class="action-btn ${btnClass}" onclick="upgradeBuilding('${building.id}', event)">
-                        ${building.level === 0 ? 'Construir' : 'Evoluir'} (🪙 ${cost} Ouro)
-                    </button>
-                </div>
-            </div>
-        `;
-        listContainer.innerHTML += cardHtml;
-    });
+function triggerErrorEffect(element) {
+    if (!element) return;
+    element.classList.add("shake-error");
+    setTimeout(() => element.classList.remove("shake-error"), 500);
 }
