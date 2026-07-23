@@ -26,7 +26,7 @@ function saveGame() {
 }
 
 /**
- * Carrega o estado do jogo salvo e restaura as instâncias de classe e níveis.
+ * Carrega o estado do jogo salvo, re-instancia os heróis e restaura missões.
  */
 function loadGame() {
     const savedData = localStorage.getItem(STORAGE_KEY);
@@ -35,7 +35,6 @@ function loadGame() {
     try {
         const parsed = JSON.parse(savedData);
 
-        // Restaura as variáveis básicas
         if (parsed.gameState) {
             if (typeof parsed.gameState.gold === 'number' && !isNaN(parsed.gameState.gold)) {
                 gameState.gold = parsed.gameState.gold;
@@ -47,7 +46,7 @@ function loadGame() {
                 gameState.maxMembers = parsed.gameState.maxMembers;
             }
 
-            // Restaura e re-instancia os heróis
+            // Restaura e recria a classe Hero garantindo que o método gainXp exista
             if (Array.isArray(parsed.gameState.adventurers)) {
                 gameState.adventurers = parsed.gameState.adventurers.map(heroData => {
                     const h = new Hero(heroData.id, heroData.name, heroData.heroClass);
@@ -61,10 +60,12 @@ function loadGame() {
 
             if (Array.isArray(parsed.gameState.activeQuests)) {
                 gameState.activeQuests = parsed.gameState.activeQuests;
+            } else {
+                gameState.activeQuests = [];
             }
         }
 
-        // Restaura os níveis das construções
+        // Restaura as construções
         if (Array.isArray(parsed.buildings) && typeof availableBuildings !== 'undefined') {
             parsed.buildings.forEach(savedBuilding => {
                 const building = availableBuildings.find(b => b.id === savedBuilding.id);
@@ -73,6 +74,19 @@ function loadGame() {
                 }
             });
         }
+
+        // Trava de segurança: Se houver missões pendentes para heróis que sumiram, destrava o status
+        if (Array.isArray(gameState.adventurers)) {
+            gameState.adventurers.forEach(hero => {
+                if (hero.status === "on_quest") {
+                    const hasActiveQuest = gameState.activeQuests.some(q => q.heroId === hero.id);
+                    if (!hasActiveQuest) {
+                        hero.status = "available";
+                    }
+                }
+            });
+        }
+
     } catch (error) {
         console.error("Erro ao carregar os dados salvos:", error);
     }
