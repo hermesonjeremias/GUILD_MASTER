@@ -4,20 +4,17 @@
 
 const STORAGE_KEY = 'guild_manager_save_data';
 
-/**
- * Salva o estado completo do jogo e o progresso das construções no localStorage.
- */
 function saveGame() {
     try {
         const dataToSave = {
             gameState: {
-                gold: gameState.gold,
-                prestige: gameState.prestige,
-                maxMembers: gameState.maxMembers,
+                gold: Number(gameState.gold) || 0,
+                prestige: Number(gameState.prestige) || 0,
+                maxMembers: Number(gameState.maxMembers) || 4,
                 adventurers: gameState.adventurers,
                 activeQuests: gameState.activeQuests
             },
-            buildings: availableBuildings.map(b => ({ id: b.id, level: b.level }))
+            buildings: Array.isArray(availableBuildings) ? availableBuildings.map(b => ({ id: b.id, level: Number(b.level) || 0 })) : []
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
     } catch (error) {
@@ -25,9 +22,6 @@ function saveGame() {
     }
 }
 
-/**
- * Carrega o estado do jogo salvo, re-instancia os heróis e restaura missões.
- */
 function loadGame() {
     const savedData = localStorage.getItem(STORAGE_KEY);
     if (!savedData) return;
@@ -36,21 +30,26 @@ function loadGame() {
         const parsed = JSON.parse(savedData);
 
         if (parsed.gameState) {
-            if (typeof parsed.gameState.gold === 'number' && !isNaN(parsed.gameState.gold)) {
-                gameState.gold = parsed.gameState.gold;
-            }
-            if (typeof parsed.gameState.prestige === 'number') {
-                gameState.prestige = parsed.gameState.prestige;
-            }
-            if (typeof parsed.gameState.maxMembers === 'number') {
-                gameState.maxMembers = parsed.gameState.maxMembers;
-            }
+            // Recupera ouro e previne NaN
+            const loadedGold = Number(parsed.gameState.gold);
+            gameState.gold = !isNaN(loadedGold) ? loadedGold : 100;
 
-            // Restaura e recria a classe Hero garantindo que o método gainXp exista
+            const loadedPrestige = Number(parsed.gameState.prestige);
+            gameState.prestige = !isNaN(loadedPrestige) ? loadedPrestige : 0;
+
+            const loadedMax = Number(parsed.gameState.maxMembers);
+            gameState.maxMembers = !isNaN(loadedMax) ? loadedMax : 4;
+
+            // Restaura e re-instancia heróis com métodos intactos
             if (Array.isArray(parsed.gameState.adventurers)) {
                 gameState.adventurers = parsed.gameState.adventurers.map(heroData => {
                     const h = new Hero(heroData.id, heroData.name, heroData.heroClass);
                     Object.assign(h, heroData);
+                    
+                    // Garante método de XP
+                    if (typeof h.gainXp !== 'function') {
+                        h.gainXp = Hero.prototype.gainXp;
+                    }
                     if (!h.stats) {
                         h.stats = { power: 10, defense: 5, speed: 5 };
                     }
@@ -65,7 +64,7 @@ function loadGame() {
             }
         }
 
-        // Restaura as construções
+        // Restaura construções
         if (Array.isArray(parsed.buildings) && typeof availableBuildings !== 'undefined') {
             parsed.buildings.forEach(savedBuilding => {
                 const building = availableBuildings.find(b => b.id === savedBuilding.id);
@@ -75,26 +74,25 @@ function loadGame() {
             });
         }
 
-        // Trava de segurança: Se houver missões pendentes para heróis que sumiram, destrava o status
+        // AUTO-CORREÇÃO: Sincroniza heróis com missões ativas para destravar
         if (Array.isArray(gameState.adventurers)) {
             gameState.adventurers.forEach(hero => {
-                if (hero.status === "on_quest") {
-                    const hasActiveQuest = gameState.activeQuests.some(q => q.heroId === hero.id);
-                    if (!hasActiveQuest) {
-                        hero.status = "available";
-                    }
+                const questAtiva = gameState.activeQuests.find(q => q.heroId === hero.id);
+                if (questAtiva) {
+                    hero.status = "on_quest";
+                } else if (hero.status === "on_quest") {
+                    // Se o status dizia que estava em missão mas a missão sumiu do array, libera ele
+                    hero.status = "available";
                 }
             });
         }
 
     } catch (error) {
-        console.error("Erro ao carregar os dados salvos:", error);
+        console.error("Erro ao carregar dados salvos. Resetando save corrompido...", error);
+        localStorage.removeItem(STORAGE_KEY);
     }
 }
 
-/**
- * Reseta todo o progresso do jogador e recarrega a página.
- */
 function resetGame() {
     if (confirm("Tem certeza que deseja reiniciar todo o seu progresso na guilda?")) {
         localStorage.removeItem(STORAGE_KEY);
