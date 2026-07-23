@@ -1,6 +1,5 @@
 // js/ui.js - Responsável por desenhar todos os elementos visuais da interface
 
-// Atualiza contadores numéricos do topo da tela
 function updateUI() {
     const goldElem = document.getElementById('gold-display');
     const prestigeElem = document.getElementById('prestige-display');
@@ -11,55 +10,37 @@ function updateUI() {
     if (membersElem) membersElem.innerText = `${gameState.adventurers.length} / ${gameState.maxMembers}`;
 }
 
-// Alterna a exibição das abas
 function switchTab(tabName) {
-    console.log("Alternando para a aba:", tabName);
-
-    // 1. Esconde todas as abas
     const tabs = document.querySelectorAll('.tab-content');
     tabs.forEach(tab => tab.classList.remove('active'));
 
-    // 2. Desmarca todos os botões do menu
     const buttons = document.querySelectorAll('.nav-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
 
-    // 3. Mostra a aba clicada
     const activeTab = document.getElementById(`tab-${tabName}`);
-    if (activeTab) {
-        activeTab.classList.add('active');
-    } else {
-        console.error(`Aba #tab-${tabName} não foi encontrada no HTML!`);
-    }
+    if (activeTab) activeTab.classList.add('active');
 
-    // 4. Marca o botão selecionado
     const clickedBtn = Array.from(buttons).find(btn => {
         const onclickAttr = btn.getAttribute('onclick');
         return onclickAttr && onclickAttr.includes(tabName);
     });
     if (clickedBtn) clickedBtn.classList.add('active');
 
-    // 5. Executa a função de renderização da aba correspondente
     if (tabName === 'aventureiros') {
         renderAdventurers();
     } else if (tabName === 'missoes') {
         renderQuests();
     } else if (tabName === 'construcoes') {
-        if (typeof renderBuildings === 'function') {
-            renderBuildings();
-        } else {
-            console.error("A função renderBuildings() não existe! Verifique se o js/buildings.js foi carregado corretamente.");
-        }
+        if (typeof renderBuildings === 'function') renderBuildings();
     }
 }
 
-// Renderiza os heróis e a área de recrutamento
 function renderAdventurers() {
     const listContainer = document.getElementById('adventurers-list');
     if (!listContainer) return;
 
     listContainer.innerHTML = '';
 
-    // Painel da Taverna de Recrutamento
     const recruitPanelHtml = `
         <div class="recruit-panel">
             <h3>Taverna de Recrutamento</h3>
@@ -82,12 +63,19 @@ function renderAdventurers() {
 
     gameState.adventurers.forEach(hero => {
         let statusBadge = '';
+        let healButtonHtml = '';
+
         if (hero.status === 'available') {
             statusBadge = '<span class="badge available">Pronto</span>';
         } else if (hero.status === 'on_quest') {
             statusBadge = '<span class="badge on-quest">Em Missão</span>';
         } else if (hero.status === 'injured') {
             statusBadge = `<span class="badge injured">Ferido (${Math.ceil(hero.injuryTimer)}s)</span>`;
+            healButtonHtml = `
+                <button class="action-btn heal-btn" onclick="healHero('${hero.id}', 15)">
+                    🧪 Curar Instantaneamente (🪙 15 Ouro)
+                </button>
+            `;
         }
 
         const cardHtml = `
@@ -105,13 +93,13 @@ function renderAdventurers() {
                     <div class="xp-bar-fill" style="width: ${(hero.xp / hero.maxXp) * 100}%"></div>
                 </div>
                 <small class="xp-text">XP: ${hero.xp} / ${hero.maxXp}</small>
+                ${healButtonHtml}
             </div>
         `;
         listContainer.innerHTML += cardHtml;
     });
 }
 
-// Renderiza o mural de contratos de missões
 function renderQuests() {
     const listContainer = document.getElementById('quests-list');
     if (!listContainer) return;
@@ -179,7 +167,6 @@ function renderQuests() {
     });
 }
 
-// Atualiza dinamicamente as barras de progresso sem reconstruir a tela
 function updateActiveQuestsUI() {
     if (!gameState.activeQuests) return;
 
@@ -195,7 +182,6 @@ function updateActiveQuestsUI() {
     });
 }
 
-// Trata a seleção do herói ao clicar em enviar missão
 function handleStartQuestClick(questId) {
     const selectElem = document.getElementById(`select-hero-${questId}`);
     if (!selectElem || !selectElem.value) {
@@ -205,17 +191,13 @@ function handleStartQuestClick(questId) {
     startQuest(questId, selectElem.value);
 }
 
-// Renderiza os prédios e melhorias na aba Construções
 function renderBuildings() {
     const listContainer = document.getElementById('buildings-list');
     if (!listContainer) return;
 
     listContainer.innerHTML = '';
 
-    if (typeof availableBuildings === 'undefined') {
-        listContainer.innerHTML = '<p class="empty-msg">Erro: Lista de construções não carregada.</p>';
-        return;
-    }
+    if (typeof availableBuildings === 'undefined') return;
 
     availableBuildings.forEach(building => {
         const cost = Math.floor(building.baseCost * Math.pow(building.costMultiplier, building.level));
