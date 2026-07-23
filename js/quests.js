@@ -2,9 +2,6 @@
    QUESTS.JS - GERENCIAMENTO DE MISSÕES E CONTRATOS DA GUILDA
    ========================================================================== */
 
-/**
- * Lista de missões disponíveis na guilda.
- */
 const availableQuestsList = [
     {
         id: "rat_problem",
@@ -49,84 +46,106 @@ const availableQuestsList = [
 ];
 
 /**
- * Inicia uma missão enviando um herói selecionado.
- * @param {string} questId - ID da missão
- * @param {string} heroId - ID do herói enviado
+ * Inicia uma missão enviando um herói disponível.
  */
 function startQuest(questId, heroId) {
+    if (!gameState || !Array.isArray(gameState.adventurers)) return;
+
     const quest = availableQuestsList.find(q => q.id === questId);
     const hero = gameState.adventurers.find(h => h.id === heroId);
 
-    if (!quest || !hero || hero.status !== "available") return;
+    if (!quest) {
+        console.warn("Missão não encontrada:", questId);
+        return;
+    }
 
+    if (!hero) {
+        console.warn("Herói não encontrado:", heroId);
+        return;
+    }
+
+    if (hero.status !== "available") {
+        console.warn("Herói não está disponível:", hero.name, hero.status);
+        return;
+    }
+
+    // Altera o status do herói
     hero.status = "on_quest";
 
-    if (!gameState.activeQuests) gameState.activeQuests = [];
+    if (!Array.isArray(gameState.activeQuests)) {
+        gameState.activeQuests = [];
+    }
 
+    // Adiciona a missão ativa
     gameState.activeQuests.push({
         id: `active_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
         questId: quest.id,
         heroId: hero.id,
         heroName: hero.name,
         title: quest.title,
-        duration: quest.duration,
-        timeRemaining: quest.duration
+        duration: Number(quest.duration),
+        timeRemaining: Number(quest.duration)
     });
 
     if (typeof saveGame === 'function') saveGame();
     if (typeof updateUI === 'function') updateUI();
     if (typeof renderQuests === 'function') renderQuests();
     if (typeof renderAdventurers === 'function') renderAdventurers();
+    if (typeof updateActiveQuestsUI === 'function') updateActiveQuestsUI();
 }
 
 /**
  * Atualiza o progresso temporal de todas as missões ativas no game loop.
- * @param {number} deltaSeconds - Segundos decorridos desde o último frame
  */
 function updateQuests(deltaSeconds) {
-    if (!gameState.activeQuests || gameState.activeQuests.length === 0) return;
+    if (!gameState || !Array.isArray(gameState.activeQuests) || gameState.activeQuests.length === 0) return;
 
     for (let i = gameState.activeQuests.length - 1; i >= 0; i--) {
         const activeQuest = gameState.activeQuests[i];
+        if (!activeQuest) continue;
+
         activeQuest.timeRemaining -= deltaSeconds;
 
         if (activeQuest.timeRemaining <= 0) {
             completeQuest(activeQuest);
             gameState.activeQuests.splice(i, 1);
+            
             if (typeof saveGame === 'function') saveGame();
             if (typeof updateUI === 'function') updateUI();
             if (typeof renderQuests === 'function') renderQuests();
             if (typeof renderAdventurers === 'function') renderAdventurers();
+            if (typeof updateActiveQuestsUI === 'function') updateActiveQuestsUI();
         }
     }
 }
 
 /**
- * Finaliza a missão, concede recompensas e define se o herói fica ferido.
- * @param {Object} activeQuest - Objeto da missão ativa concluída
+ * Finaliza a missão, concede recompensas e define o status do herói.
  */
 function completeQuest(activeQuest) {
     const questInfo = availableQuestsList.find(q => q.id === activeQuest.questId);
     const hero = gameState.adventurers.find(h => h.id === activeQuest.heroId);
 
-    if (!hero) return;
-
     if (questInfo) {
-        gameState.gold += questInfo.goldReward;
-        gameState.prestige += questInfo.prestigeReward;
+        // Concede recompensas garantindo tipo numérico
+        const currentGold = Number(gameState.gold) || 0;
+        const currentPrestige = Number(gameState.prestige) || 0;
 
-        if (typeof hero.gainXp === 'function') {
+        gameState.gold = currentGold + questInfo.goldReward;
+        gameState.prestige = currentPrestige + questInfo.prestigeReward;
+
+        if (hero && typeof hero.gainXp === 'function') {
             hero.gainXp(questInfo.xpReward);
         }
+    }
 
+    if (hero) {
         const rolledDice = Math.random();
-        if (rolledDice < questInfo.injuryChance) {
+        if (questInfo && rolledDice < questInfo.injuryChance) {
             hero.status = "injured";
             hero.injuryTimer = 30;
         } else {
             hero.status = "available";
         }
-    } else {
-        hero.status = "available";
     }
 }
