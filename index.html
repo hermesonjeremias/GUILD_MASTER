@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guild Master - Idle Management</title>
-    <!-- Carrega as regras de estilo visuais -->
+    <!-- Carrega o CSS global -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- BARRA SUPERIOR: Exibe os recursos globais da guilda -->
+    <!-- BARRA SUPERIOR: Exibe recursos principais -->
     <header id="top-bar">
         <div class="resource-box">
             <span class="label">Ouro:</span>
@@ -27,8 +27,7 @@
 
     <!-- ÁREA PRINCIPAL DO JOGO -->
     <main id="app-container">
-        
-        <!-- MENU LATERAL: Botões para trocar de aba -->
+        <!-- MENU LATERAL -->
         <nav id="sidebar">
             <button class="nav-btn active" onclick="switchTab('guilda')">🏰 Guilda</button>
             <button class="nav-btn" onclick="switchTab('aventureiros')">⚔️ Aventureiros</button>
@@ -36,60 +35,50 @@
             <button class="nav-btn" onclick="switchTab('construcoes')">🏗️ Construções</button>
         </nav>
 
-        <!-- PAINEL DE CONTEÚDO: Exibe a tela correspondente à aba selecionada -->
+        <!-- PAINEL DE CONTEÚDO -->
         <section id="content-panel">
             
-            <!-- ABA 1: GUILDA (Ações principais do jogador) -->
+            <!-- ABA GUILDA -->
             <div id="tab-guilda" class="tab-content active">
                 <h2>Administração da Guilda</h2>
                 <p>Bem-vindo, Mestre da Guilda! Clique abaixo para arrecadar fundos e começar o seu império.</p>
                 <button class="action-btn" onclick="clickGatherGold()">Coletar Impostos (+1 Ouro)</button>
             </div>
 
-            <!-- ABA 2: AVENTUREIROS (Lista os heróis recrutados) -->
+            <!-- ABA AVENTUREIROS -->
             <div id="tab-aventureiros" class="tab-content">
                 <h2>Seus Aventureiros</h2>
                 <div id="adventurers-list">
-                    <!-- Conteúdo gerado dinamicamente via JS (ui.js) -->
+                    <!-- Gerado dinamicamente pelo JS -->
                 </div>
             </div>
 
-            <!-- ABA 3: MISSÕES (Mural de contratos e missões em andamento) -->
+            <!-- ABA MISSÕES -->
             <div id="tab-missoes" class="tab-content">
                 <h2>Mural de Contratos</h2>
                 <div id="quests-list">
-                    <!-- Conteúdo gerado dinamicamente via JS (ui.js) -->
+                    <!-- Gerado dinamicamente pelo JS -->
                 </div>
             </div>
 
-            <!-- ABA 4: CONSTRUÇÕES (Melhorias de infraestrutura) -->
+            <!-- ABA CONSTRUÇÕES -->
             <div id="tab-construcoes" class="tab-content">
                 <h2>Infraestrutura da Guilda</h2>
                 <div id="buildings-list">
-                    <!-- Conteúdo será implementado na aba de construções -->
+                    <!-- Gerado dinamicamente pelo JS -->
                 </div>
             </div>
 
         </section>
     </main>
 
-    <!-- IMPORTAÇÃO DOS SCRIPTS (A ordem é crítica para evitar erros de dependência) -->
-    <!-- 1. data.js: Guarda o estado do jogo (gameState) -->
+    <!-- IMPORTAÇÃO DOS SCRIPTS (A ordem é fundamental) -->
     <script src="js/data.js"></script>
-    
-    <!-- 2. hero.js: Define a classe base dos aventureiros (Hero) -->
     <script src="js/hero.js"></script>
-    
-    <!-- 3. adventurers.js: Funções de recrutamento e cronômetros dos heróis -->
     <script src="js/adventurers.js"></script>
-    
-    <!-- 4. quests.js: Lógica das missões, tempo e recompensas -->
     <script src="js/quests.js"></script>
-    
-    <!-- 5. ui.js: Atualiza elementos HTML e renderiza telas/cards -->
+    <script src="js/buildings.js"></script> <!-- NOVO SCRIPT -->
     <script src="js/ui.js"></script>
-    
-    <!-- 6. game.js: Loop principal do jogo e inicialização window.onload -->
     <script src="js/game.js"></script>
 </body>
 </html>
