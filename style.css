@@ -1,4 +1,295 @@
-/* ESTILOS DE RECRUTAMENTO E CONSTRUÇÕES */
+/* ==========================================================================
+   1. RESETS E CONFIGURAÇÕES GLOBAIS
+   ========================================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    -webkit-tap-highlight-color: transparent; /* Remove o destaque de toque no mobile */
+}
+
+body {
+    background-color: #121214;
+    color: #e1e1e6;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden; /* Evita rolagem da página inteira; a rolagem fica no painel */
+}
+
+/* ==========================================================================
+   2. BARRA SUPERIOR DE RECURSOS (TOP-BAR)
+   ========================================================================== */
+#top-bar {
+    background-color: #202024;
+    border-bottom: 2px solid #323238;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 12px;
+    height: 60px;
+}
+
+.resource-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.resource-box .label {
+    font-size: 0.85rem;
+    color: #8d8d99;
+    font-weight: 600;
+}
+
+.resource-box .value {
+    font-size: 1.1rem;
+    color: #fba94c; /* Dourado/Laranja */
+    font-weight: bold;
+}
+
+/* ==========================================================================
+   3. ESTRUTURA PRINCIPAL E LAYOUT
+   ========================================================================== */
+#app-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Layout responsivo para celular (Menu na parte inferior ou empilhado) */
+@media (max-width: 768px) {
+    #app-container {
+        flex-direction: column-reverse; /* Coloca o menu de navegação embaixo no celular */
+    }
+}
+
+/* ==========================================================================
+   4. MENU DE NAVEGAÇÃO (SIDEBAR / NAV)
+   ========================================================================== */
+#sidebar {
+    background-color: #121214;
+    border-right: 1px solid #323238;
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+    padding: 10px;
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    #sidebar {
+        width: 100%;
+        flex-direction: row;
+        border-right: none;
+        border-top: 1px solid #323238;
+        padding: 8px;
+    }
+}
+
+.nav-btn {
+    background-color: #202024;
+    border: 1px solid #323238;
+    color: #a8a8b3;
+    padding: 12px;
+    border-radius: 6px;
+    text-align: left;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+.nav-btn:hover {
+    background-color: #29292e;
+    color: #ffffff;
+}
+
+.nav-btn.active {
+    background-color: #00875f;
+    color: #ffffff;
+    border-color: #00b37e;
+}
+
+/* ==========================================================================
+   5. PAINEL DE CONTEÚDO E ABAS
+   ========================================================================== */
+#content-panel {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto; /* Rolagem independente apenas no conteúdo */
+    background-color: #121214;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-content h2 {
+    margin-bottom: 15px;
+    color: #00b37e;
+    font-size: 1.4rem;
+}
+
+.tab-content p {
+    color: #c4c4cc;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.section-title {
+    color: #8d8d99;
+    font-size: 1rem;
+    margin: 20px 0 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.empty-msg {
+    color: #7c7c8a;
+    font-style: italic;
+}
+
+.divider {
+    border: 0;
+    border-top: 1px solid #323238;
+    margin: 20px 0;
+}
+
+/* ==========================================================================
+   6. BOTÕES DE AÇÃO GERAIS
+   ========================================================================== */
+.action-btn {
+    background-color: #00875f;
+    color: #ffffff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.action-btn:hover {
+    background-color: #00b37e;
+}
+
+.action-btn:disabled {
+    background-color: #323238;
+    color: #7c7c8a;
+    cursor: not-allowed;
+}
+
+/* Botão de Cura */
+.heal-btn {
+    background-color: #2e7d32;
+    margin-top: 10px;
+    width: 100%;
+}
+.heal-btn:hover {
+    background-color: #1b5e20;
+}
+
+/* Botão de Reset de Save */
+.reset-btn {
+    background-color: #c62828;
+    margin-top: 10px;
+}
+.reset-btn:hover {
+    background-color: #8e0000;
+}
+
+/* ==========================================================================
+   7. CARDS DOS AVENTUREIROS
+   ========================================================================== */
+.hero-card {
+    background-color: #202024;
+    border: 1px solid #323238;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 12px;
+    max-width: 500px;
+}
+
+.hero-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.hero-header h3 {
+    font-size: 1.1rem;
+    color: #ffffff;
+}
+
+.hero-header h3 small {
+    font-size: 0.85rem;
+    color: #8d8d99;
+    font-weight: normal;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.badge.available {
+    background-color: #015f43;
+    color: #00b37e;
+}
+
+.badge.on-quest {
+    background-color: #7a5100;
+    color: #fba94c;
+}
+
+.badge.injured {
+    background-color: #7a1e1e;
+    color: #f75a68;
+}
+
+.hero-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: #c4c4cc;
+    margin-bottom: 10px;
+}
+
+.xp-bar-container {
+    width: 100%;
+    height: 8px;
+    background-color: #121214;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.xp-bar-fill {
+    height: 100%;
+    background-color: #9b51e0; /* Roxo para XP */
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.xp-text {
+    font-size: 0.75rem;
+    color: #8d8d99;
+}
+
+/* ==========================================================================
+   8. TAVERNA DE RECRUTAMENTO
+   ========================================================================== */
 .recruit-panel {
     background-color: #202024;
     border: 1px solid #323238;
@@ -32,12 +323,105 @@
     padding: 8px 12px;
 }
 
-.divider {
-    border: 0;
-    border-top: 1px solid #323238;
-    margin: 20px 0;
+/* ==========================================================================
+   9. CARDS DE MISSÕES E CONTRATOS
+   ========================================================================== */
+.quest-card {
+    background-color: #202024;
+    border: 1px solid #323238;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    max-width: 500px;
 }
 
+.quest-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.quest-header h4 {
+    font-size: 1rem;
+    color: #ffffff;
+}
+
+.quest-duration {
+    font-size: 0.85rem;
+    color: #8d8d99;
+}
+
+.quest-desc {
+    font-size: 0.85rem;
+    color: #c4c4cc;
+    margin-bottom: 10px;
+}
+
+.quest-rewards {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: #fba94c;
+    margin-bottom: 12px;
+}
+
+.risk-tag {
+    color: #f75a68;
+}
+
+.quest-action {
+    display: flex;
+    gap: 10px;
+}
+
+.quest-action select {
+    flex: 1;
+    background-color: #121214;
+    border: 1px solid #323238;
+    color: #e1e1e6;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.quest-hero-tag {
+    font-size: 0.85rem;
+    color: #00b37e;
+    font-weight: bold;
+}
+
+.active-quest-card {
+    border-color: #00875f;
+    background-color: #18221f;
+}
+
+.quest-progress-container {
+    width: 100%;
+    height: 10px;
+    background-color: #121214;
+    border-radius: 5px;
+    overflow: hidden;
+    margin: 10px 0 6px 0;
+}
+
+.quest-progress-fill {
+    height: 100%;
+    background-color: #00b37e;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+.quest-time {
+    font-size: 0.8rem;
+    color: #8d8d99;
+}
+
+/* ==========================================================================
+   10. CARDS DE CONSTRUÇÕES
+   ========================================================================== */
 .building-card {
     background-color: #202024;
     border: 1px solid #323238;
@@ -48,7 +432,7 @@
 }
 
 .building-header h3 {
-    color: #fff;
+    color: #ffffff;
     font-size: 1.1rem;
 }
 
