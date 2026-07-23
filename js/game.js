@@ -18,7 +18,7 @@ function gameLoop(timestamp) {
         updateQuests(deltaSeconds);
     }
 
-    // 2. Atualiza temporizadores dos aventureiros (cura de ferimentos e XP passivo do Treinamento)
+    // 2. Atualiza temporizadores dos aventureiros (cura e XP passivo)
     if (typeof updateAdventurersTimers === 'function') {
         updateAdventurersTimers(deltaSeconds);
     }
@@ -26,7 +26,7 @@ function gameLoop(timestamp) {
     // 3. Produção passiva de Ouro por segundo (Mural de Contratos)
     if (typeof calculateGoldPerSecond === 'function') {
         const gps = calculateGoldPerSecond();
-        if (gps > 0) {
+        if (gps > 0 && !isNaN(gps)) {
             gameState.gold += gps * deltaSeconds;
         }
     }
