@@ -1,5 +1,10 @@
-// js/adventurers.js - Cuida do recrutamento e atualização dos heróis
+/* ==========================================================================
+   ADVENTURERS.JS - RECRUTAMENTO, HERÓIS E ATUALIZAÇÃO PASSIVA
+   ========================================================================== */
 
+/**
+ * Garante que o herói inicial Aldric seja recrutado no primeiro início do jogo.
+ */
 function recruitAldric() {
     const hasAldric = gameState.adventurers.some(hero => hero.id === "aldric_1");
     if (!hasAldric) {
@@ -8,14 +13,23 @@ function recruitAldric() {
     }
 }
 
+// Lista de nomes aleatórios para novos recrutas
 const recruitNames = ["Gideon", "Lyra", "Eldrin", "Valerie", "Kaelen", "Soren", "Thorne", "Aria"];
 
+/**
+ * Contrata um novo aventureiro para a guilda.
+ * @param {string} heroClass - Classe do aventureiro ('Guerreiro', 'Mago', 'Padre', 'Arqueiro')
+ * @param {number} cost - Custo em ouro do recrutamento
+ * @param {Event} event - Evento de clique para feedback de erro
+ */
 function hireAdventurer(heroClass, cost, event) {
+    // Validação de ouro suficiente
     if (gameState.gold < cost) {
         if (event && event.currentTarget) triggerErrorEffect(event.currentTarget);
         return;
     }
 
+    // Validação de capacidade da guilda
     if (gameState.adventurers.length >= gameState.maxMembers) {
         if (event && event.currentTarget) triggerErrorEffect(event.currentTarget);
         return;
@@ -34,6 +48,12 @@ function hireAdventurer(heroClass, cost, event) {
     renderAdventurers();
 }
 
+/**
+ * Permite curar instantaneamente um herói ferido pagando uma quantia em ouro.
+ * @param {string} heroId - ID do herói
+ * @param {number} cost - Custo da cura
+ * @param {Event} event - Evento de clique
+ */
 function healHero(heroId, cost = 15, event) {
     const hero = gameState.adventurers.find(h => h.id === heroId);
     if (!hero) return;
@@ -52,16 +72,20 @@ function healHero(heroId, cost = 15, event) {
     renderAdventurers();
 }
 
-// Atualiza o tempo de recuperação e ganho de XP passivo
+/**
+ * Atualiza o temporizador de ferimentos e concede XP passivo do Centro de Treinamento.
+ * @param {number} deltaSeconds - Tempo em segundos decorrido no frame do jogo
+ */
 function updateAdventurersTimers(deltaSeconds) {
+    // Pega os bônus das construções ativas
     const infirmaryLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('infirmary') : 0;
-    // Cada nível da enfermaria faz o tempo passar 25% mais rápido
+    // Cada nível da enfermaria acelera o tempo em +25%
     const timeSpeedup = 1 + (infirmaryLevel * 0.25);
 
     const trainingLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('training_hall') : 0;
 
     gameState.adventurers.forEach(hero => {
-        // Redução do tempo de ferida
+        // 1. Redução do tempo de cura se o herói estiver ferido
         if (hero.status === "injured") {
             hero.injuryTimer -= (deltaSeconds * timeSpeedup);
             if (hero.injuryTimer <= 0) {
@@ -71,7 +95,7 @@ function updateAdventurersTimers(deltaSeconds) {
             }
         }
 
-        // XP Passivo do Centro de Treinamento
+        // 2. XP Passivo do Centro de Treinamento se o herói estiver disponível
         if (hero.status === "available" && trainingLevel > 0) {
             const xpGained = trainingLevel * deltaSeconds;
             hero.gainXp(xpGained);
@@ -79,7 +103,10 @@ function updateAdventurersTimers(deltaSeconds) {
     });
 }
 
-// Calcula o Ouro gerado por segundo com base no Poder Total dos aventureiros
+/**
+ * Calcula a renda passiva de ouro gerada por segundo (Gold/s) com base no Mural de Contratos.
+ * @returns {number} Ouro por segundo gerado
+ */
 function calculateGoldPerSecond() {
     const contractBoardLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('contract_board') : 0;
     if (contractBoardLevel === 0) return 0;
@@ -87,6 +114,6 @@ function calculateGoldPerSecond() {
     // Soma o poder de todos os heróis da guilda
     const totalPower = gameState.adventurers.reduce((sum, hero) => sum + (hero.stats.power || 0), 0);
     
-    // Cada nível do Mural gera 20% do Poder em Ouro por segundo (ex: 50 Poder * Lvl 1 * 0.2 = 10 Ouro/s)
+    // Cada nível do Mural gera 20% do Poder em Ouro por segundo
     return totalPower * contractBoardLevel * 0.2;
 }
