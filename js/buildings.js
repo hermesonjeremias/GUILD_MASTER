@@ -65,13 +65,13 @@ function upgradeBuilding(buildingId, event) {
 
     // Efeito imediato da construção de dormitório
     if (building.id === "dormitory") {
-        gameState.maxMembers += building.membersPerLevel;
+        gameState.maxMembers = 4 + (building.level * building.membersPerLevel);
     }
 
     // Persiste os dados e atualiza a interface
     if (typeof saveGame === 'function') saveGame();
-    updateUI();
-    renderBuildings();
+    if (typeof updateUI === 'function') updateUI();
+    if (typeof renderBuildings === 'function') renderBuildings();
 }
 
 /**
@@ -80,6 +80,7 @@ function upgradeBuilding(buildingId, event) {
  * @returns {number} Nível atual da construção ou 0 se não encontrada
  */
 function getBuildingLevel(buildingId) {
+    if (typeof availableBuildings === 'undefined' || !Array.isArray(availableBuildings)) return 0;
     const building = availableBuildings.find(b => b.id === buildingId);
-    return building ? building.level : 0;
+    return building ? Number(building.level) || 0 : 0;
 }
