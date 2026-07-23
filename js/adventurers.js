@@ -1,6 +1,5 @@
-// js/adventurers.js - Cuida do recrutamento, cura e atualização dos heróis
+// js/adventurers.js - Cuida do recrutamento e atualização dos heróis
 
-// Recruta o herói inicial Aldric (executado apenas se não houver save salvo)
 function recruitAldric() {
     const hasAldric = gameState.adventurers.some(hero => hero.id === "aldric_1");
     if (!hasAldric) {
@@ -11,51 +10,55 @@ function recruitAldric() {
 
 const recruitNames = ["Gideon", "Lyra", "Eldrin", "Valerie", "Kaelen", "Soren", "Thorne", "Aria"];
 
-// Contrata um novo herói pagando a taxa
-function hireAdventurer(heroClass, cost) {
+// Contrata um novo herói
+function hireAdventurer(heroClass, cost, event) {
+    // 1. Validação de Gold: Se não tiver, aplica o efeito visual no botão e cancela sem pop-up
     if (gameState.gold < cost) {
-        alert("Ouro insuficiente na guilda para recrutar!");
+        if (event && event.currentTarget) triggerErrorEffect(event.currentTarget);
         return;
     }
 
+    // 2. Validação de Limite de Dormitórios: Aplica o efeito visual no botão e cancela sem pop-up
     if (gameState.adventurers.length >= gameState.maxMembers) {
-        alert("Dormitórios cheios! Expanda a guilda na aba Construções para abrigar mais membros.");
+        if (event && event.currentTarget) triggerErrorEffect(event.currentTarget);
         return;
     }
 
     const randomName = recruitNames[Math.floor(Math.random() * recruitNames.length)];
     const uniqueId = `hero_${Date.now()}`;
 
+    // Desconta o ouro
     gameState.gold -= cost;
 
+    // Cria o herói
     const newHero = new Hero(uniqueId, randomName, heroClass);
     gameState.adventurers.push(newHero);
 
-    saveGame(); // Salva automaticamente ao recrutar
+    if (typeof saveGame === 'function') saveGame();
     updateUI();
     renderAdventurers();
 }
 
-// Paga tratamento para curar instantaneamente um herói ferido (Custo: 15 Ouro)
-function healHero(heroId, cost = 15) {
+// Cura o herói ferido
+function healHero(heroId, cost = 15, event) {
     const hero = gameState.adventurers.find(h => h.id === heroId);
     if (!hero) return;
 
     if (gameState.gold < cost) {
-        alert("Ouro insuficiente para pagar a poção de cura!");
+        if (event && event.currentTarget) triggerErrorEffect(event.currentTarget);
         return;
     }
 
-    gameState.gold -= cost; // Deduz custo do tratamento
-    hero.status = "available"; // Restaura status
-    hero.injuryTimer = 0; // Zera o tempo
+    gameState.gold -= cost;
+    hero.status = "available";
+    hero.injuryTimer = 0;
 
-    saveGame(); // Salva estado
+    if (typeof saveGame === 'function') saveGame();
     updateUI();
     renderAdventurers();
 }
 
-// Atualiza o tempo de recuperação dos heróis feridos no ciclo
+// Atualiza o tempo de recuperação dos heróis feridos
 function updateAdventurersTimers(deltaSeconds) {
     gameState.adventurers.forEach(hero => {
         if (hero.status === "injured") {
@@ -63,7 +66,7 @@ function updateAdventurersTimers(deltaSeconds) {
             if (hero.injuryTimer <= 0) {
                 hero.injuryTimer = 0;
                 hero.status = "available";
-                renderAdventurers(); // Atualiza a lista quando alguém sara
+                renderAdventurers();
             }
         }
     });
