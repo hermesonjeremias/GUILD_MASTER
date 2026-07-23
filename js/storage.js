@@ -35,19 +35,26 @@ function loadGame() {
     try {
         const parsed = JSON.parse(savedData);
 
-        // Restaura as variáveis básicas com garantia de tipo numérico
+        // Restaura as variáveis básicas
         if (parsed.gameState) {
-            if (typeof parsed.gameState.gold === 'number') gameState.gold = parsed.gameState.gold;
-            if (typeof parsed.gameState.prestige === 'number') gameState.prestige = parsed.gameState.prestige;
-            if (typeof parsed.gameState.maxMembers === 'number') gameState.maxMembers = parsed.gameState.maxMembers;
+            if (typeof parsed.gameState.gold === 'number' && !isNaN(parsed.gameState.gold)) {
+                gameState.gold = parsed.gameState.gold;
+            }
+            if (typeof parsed.gameState.prestige === 'number') {
+                gameState.prestige = parsed.gameState.prestige;
+            }
+            if (typeof parsed.gameState.maxMembers === 'number') {
+                gameState.maxMembers = parsed.gameState.maxMembers;
+            }
 
             // Restaura e re-instancia os heróis
             if (Array.isArray(parsed.gameState.adventurers)) {
                 gameState.adventurers = parsed.gameState.adventurers.map(heroData => {
                     const h = new Hero(heroData.id, heroData.name, heroData.heroClass);
                     Object.assign(h, heroData);
-                    // Garante que o objeto de atributos existe e possui valores
-                    if (!h.stats) h.stats = { power: 10, defense: 5, speed: 5 };
+                    if (!h.stats) {
+                        h.stats = { power: 10, defense: 5, speed: 5 };
+                    }
                     return h;
                 });
             }
