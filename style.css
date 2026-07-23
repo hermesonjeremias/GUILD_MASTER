@@ -15,7 +15,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    height: -webkit-fill-available; /* Ajuste especial para navegação mobile */
+    height: 100dvh; /* Utiliza a altura real visível do navegador mobile */
     overflow: hidden;
 }
 
@@ -24,19 +24,19 @@ body {
    ========================================================================== */
 #top-bar {
     background-color: #202024;
-    border-bottom: 2px solid #323238;
+    border-bottom: 1px solid #323238;
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 10px 5px;
-    min-height: 55px;
-    flex-shrink: 0; /* Impede a barra de encolher no mobile */
+    padding: 10px;
+    min-height: 50px;
+    flex-shrink: 0;
 }
 
 .resource-box {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
 }
 
 .resource-box .label {
@@ -52,34 +52,33 @@ body {
 }
 
 /* ==========================================================================
-   3. ESTRUTURA PRINCIPAL E LAYOUT MOBILE
+   3. ESTRUTURA PRINCIPAL E LAYOUT
    ========================================================================== */
 #app-container {
     display: flex;
     flex: 1;
-    flex-direction: column; /* No celular, fluxo natural de cima para baixo */
+    flex-direction: column; /* No celular, empilha o menu no TOPO e o conteúdo abaixo */
     overflow: hidden;
 }
 
-/* Em telas maiores (Computadores/Tablets), coloca o menu na esquerda */
 @media (min-width: 769px) {
     #app-container {
-        flex-direction: row;
+        flex-direction: row; /* No computador, fica lado a lado */
     }
 }
 
 /* ==========================================================================
-   4. MENU DE NAVEGAÇÃO (SIDEBAR / NAV)
+   4. MENU DE NAVEGAÇÃO SUPERIOR NO MOBILE (SIDEBAR)
    ========================================================================== */
 #sidebar {
     background-color: #1a1a1e;
     border-bottom: 2px solid #323238;
     display: flex;
-    flex-direction: row; /* Botões lado a lado no celular */
+    flex-direction: row;
     padding: 8px;
     gap: 6px;
-    flex-shrink: 0; /* Garante que o menu sempre fique visível */
-    overflow-x: auto; /* Permite rolar os botões se a tela for muito estreita */
+    flex-shrink: 0;
+    width: 100%;
 }
 
 @media (min-width: 769px) {
@@ -87,7 +86,7 @@ body {
         width: 200px;
         flex-direction: column;
         border-bottom: none;
-        border-right: 1px solid #323238;
+        border-right: 2px solid #323238;
         padding: 12px;
         gap: 8px;
     }
@@ -97,7 +96,7 @@ body {
     background-color: #202024;
     border: 1px solid #323238;
     color: #a8a8b3;
-    padding: 10px 8px;
+    padding: 10px 6px;
     border-radius: 6px;
     text-align: center;
     font-size: 0.85rem;
@@ -105,7 +104,7 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     flex: 1;
-    white-space: nowrap; /* Evita que o texto do botão quebre em duas linhas */
+    white-space: nowrap;
 }
 
 .nav-btn:hover, .nav-btn:active {
@@ -124,10 +123,10 @@ body {
    ========================================================================== */
 #content-panel {
     flex: 1;
-    padding: 15px;
-    overflow-y: auto; /* Conteúdo rola perfeitamente se passar da tela */
+    padding: 15px 15px 40px 15px; /* Margem extra na parte inferior para rolar sem cortar botões */
+    overflow-y: auto;
     background-color: #121214;
-    -webkit-overflow-scrolling: touch; /* ROLAGEM SUAVE NO CELULAR (iOS/Android) */
+    -webkit-overflow-scrolling: touch;
 }
 
 .tab-content {
@@ -153,7 +152,7 @@ body {
 
 .section-title {
     color: #8d8d99;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     margin: 16px 0 8px 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -162,7 +161,7 @@ body {
 .empty-msg {
     color: #7c7c8a;
     font-style: italic;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .divider {
@@ -178,13 +177,15 @@ body {
     background-color: #00875f;
     color: #ffffff;
     border: none;
-    padding: 10px 14px;
+    padding: 12px 14px;
     border-radius: 6px;
     font-size: 0.9rem;
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s;
     touch-action: manipulation;
+    display: inline-block;
+    text-align: center;
 }
 
 .action-btn:active {
@@ -205,7 +206,8 @@ body {
 
 .reset-btn {
     background-color: #c62828;
-    margin-top: 10px;
+    margin-top: 15px;
+    width: 100%;
 }
 
 /* ==========================================================================
@@ -216,7 +218,7 @@ body {
     border: 1px solid #323238;
     border-radius: 8px;
     padding: 12px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     width: 100%;
 }
 
@@ -228,7 +230,7 @@ body {
 }
 
 .hero-header h3 {
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: #ffffff;
 }
 
@@ -315,14 +317,14 @@ body {
 
 .recruit-buttons {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 botões por linha no celular */
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
 }
 
 .recruit-buttons .action-btn {
     margin-top: 0;
     font-size: 0.8rem;
-    padding: 8px 6px;
+    padding: 10px 6px;
 }
 
 /* ==========================================================================
@@ -375,15 +377,22 @@ body {
 
 .quest-action {
     display: flex;
+    flex-direction: column; /* Coloca a seleção e o botão um em cima do outro no celular */
     gap: 8px;
 }
 
+@media (min-width: 480px) {
+    .quest-action {
+        flex-direction: row; /* Em telas um pouco maiores, ficam lado a lado */
+    }
+}
+
 .quest-action select {
-    flex: 1;
+    width: 100%;
     background-color: #121214;
     border: 1px solid #323238;
     color: #e1e1e6;
-    padding: 8px;
+    padding: 10px;
     border-radius: 6px;
     font-size: 0.85rem;
     outline: none;
