@@ -4,9 +4,9 @@
 
 const Quests = {
     available: [
-        { id: 'rats', title: 'Caçar Ratos no Porão', duration: 5, rewardGold: 35, reqLevel: 1, icon: '🐀' },
-        { id: 'goblin', title: 'Patrulhar a Floresta', duration: 12, rewardGold: 120, reqLevel: 1, icon: '🌲' },
-        { id: 'escort', title: 'Escoltar Caravana', duration: 30, rewardGold: 400, reqLevel: 1, icon: '🛒' }
+        { id: 'rats', title: 'Caçar Ratos no Porão', duration: 5, rewardGold: 35, icon: '🐀' },
+        { id: 'goblin', title: 'Patrulhar a Floresta', duration: 12, rewardGold: 120, icon: '🌲' },
+        { id: 'escort', title: 'Escoltar Caravana', duration: 30, rewardGold: 400, icon: '🛒' }
     ],
 
     startQuest(questId) {
@@ -18,7 +18,6 @@ const Quests = {
         const template = this.available.find(q => q.id === questId);
         if (!template) return;
 
-        // Adiciona à lista de missões ativas
         state.activeQuests.push({
             ...template,
             instanceId: Date.now(),
@@ -36,7 +35,6 @@ const Quests = {
             const q = state.activeQuests[i];
             q.elapsed += dt;
 
-            // Missão Concluída
             if (q.elapsed >= q.duration) {
                 state.gold += q.rewardGold;
                 state.activeQuests.splice(i, 1);
@@ -45,18 +43,20 @@ const Quests = {
     },
 
     render() {
-        const container = document.getElementById('quests-list') || document.getElementById('tab-quests');
+        // ID exato do index.html: quests-container
+        const container = document.getElementById('quests-container');
         if (!container) return;
 
-        let html = '<h2>📜 Missões Disponíveis</h2><div class="cards-grid">';
+        let html = '<h3>📜 Mural de Missões</h3>';
 
         this.available.forEach(quest => {
             html += `
-                <div class="card">
-                    <div class="card-icon">${quest.icon}</div>
-                    <h3>${quest.title}</h3>
-                    <p>Duração: ${quest.duration}s</p>
-                    <p>Recompensa: 💰 ${quest.rewardGold} Ouro</p>
+                <div class="quest-card">
+                    <h4>${quest.icon} ${quest.title}</h4>
+                    <div class="rewards">
+                        <span>⏱️ Duração: ${quest.duration}s</span>
+                        <span>🪙 Recompensa: +${quest.rewardGold} Ouro</span>
+                    </div>
                     <button class="action-btn" onclick="Quests.startQuest('${quest.id}')">
                         Enviar Herói
                     </button>
@@ -64,7 +64,6 @@ const Quests = {
             `;
         });
 
-        html += '</div><div id="active-quests-container"></div>';
         container.innerHTML = html;
     }
 };
