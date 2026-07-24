@@ -22,15 +22,21 @@ function updateUI() {
     if (prestigeElem) prestigeElem.innerText = gameState.prestige;
     if (membersElem) membersElem.innerText = `${gameState.adventurers.length}/${gameState.maxMembers}`;
 
-    // Atualiza o estado habilitado/desabilitado dos botões em tempo real conforme o Ouro acumula
+    // Atualiza o estado dos botões em tempo real (escuro/aceso)
     updateButtonsState();
+
+    // ATUALIZAÇÃO EM TEMPO REAL: Se a aba de Aventureiros estiver visível, atualiza a lista e o XP dinamicamente
+    const activeTab = document.getElementById('tab-aventureiros');
+    if (activeTab && activeTab.classList.contains('active')) {
+        renderAdventurers();
+    }
 }
 
-// Função para atualizar dinamicamente o estado (escuro/aceso) dos botões sem regerar o HTML
+// Atualiza dinamicamente o estado dos botões sem regerar o HTML inteiro
 function updateButtonsState() {
     const currentGold = Number(gameState.gold) || 0;
 
-    // Botões de recrutamento (Custo: 40 Ouro + Limite de Vagas)
+    // Botões de recrutamento (Custo: 40 Ouro)
     const recruitCost = 40;
     const canRecruit = currentGold >= recruitCost && gameState.adventurers.length < gameState.maxMembers;
     document.querySelectorAll('.recruit-buttons .action-btn').forEach(btn => {
@@ -99,9 +105,10 @@ function renderAdventurers() {
             healBtn = `<button class="action-btn heal-btn" ${healDisabled} onclick="healHero('${hero.id}', 15, event)">🧪 Curar (🪙 15)</button>`;
         }
 
-        // Tag indicativa de treino quando o Centro de Treinamento está ativo
-        const trainingTag = (trainingLevel > 0 && hero.status === 'available') 
-            ? ` <small style="color: #2ed573;">⚡ (+${trainingLevel} XP/s)</small>` 
+        // Calcula e exibe o ganho de XP/s em tempo real
+        const xpPerSecond = (trainingLevel > 0 && hero.status === 'available') ? trainingLevel : 0;
+        const xpRateDisplay = xpPerSecond > 0 
+            ? ` <small style="color: #2ed573; font-weight: bold;">(+${xpPerSecond.toFixed(1)} XP/s)</small>` 
             : '';
 
         html += `
@@ -115,7 +122,7 @@ function renderAdventurers() {
                     <span>🛡️ Defesa: ${hero.stats.defense}</span>
                 </div>
                 <div class="xp-container">
-                    <small>XP: ${Math.floor(hero.xp)} / ${hero.maxXp}</small>${trainingTag}
+                    <small>XP: <strong>${Math.floor(hero.xp)}</strong> / ${hero.maxXp}</small>${xpRateDisplay}
                 </div>
                 ${healBtn}
             </div>
@@ -123,7 +130,11 @@ function renderAdventurers() {
     });
 
     html += '</div>';
-    container.innerHTML = html;
+
+    // Evita redesenhar o DOM se o HTML for idêntico para evitar piscadas na tela
+    if (container.innerHTML !== html) {
+        container.innerHTML = html;
+    }
 }
 
 function renderQuests() {
