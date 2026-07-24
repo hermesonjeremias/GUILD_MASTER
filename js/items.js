@@ -45,4 +45,4 @@ const Items = {
         html += '</div>';
         container.innerHTML = html;
     }
-};
+}
