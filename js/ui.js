@@ -1,5 +1,5 @@
 /* ==========================================================================
-   UI.JS - RENDERIZAÇÃO E INTERAÇÃO COM A TELA (COM 5 ESCALAS DE CORES)
+   UI.JS - RENDERIZAÇÃO E INTERAÇÃO COM A TELA (COM LOJA E EQUIPAMENTOS)
    ========================================================================== */
 
 function triggerErrorEffect(element) {
@@ -8,7 +8,6 @@ function triggerErrorEffect(element) {
     setTimeout(() => element.classList.remove('btn-error-shake'), 400);
 }
 
-// Retorna a classe CSS com base na porcentagem da chance de sucesso
 function getChanceColorClass(chance) {
     if (chance <= 25) return 'chance-red';
     if (chance <= 50) return 'chance-orange';
@@ -52,7 +51,7 @@ function updateButtonsState() {
         btn.disabled = currentGold < 15;
     });
 
-    document.querySelectorAll('.building-btn').forEach(btn => {
+    document.querySelectorAll('.building-btn, .shop-btn').forEach(btn => {
         const cost = Number(btn.getAttribute('data-cost')) || 0;
         btn.disabled = currentGold < cost;
     });
@@ -70,6 +69,7 @@ function switchTab(tabName) {
     if (tabName === 'aventureiros') renderAdventurers();
     if (tabName === 'missoes') renderQuests();
     if (tabName === 'construcoes') renderBuildings();
+    if (tabName === 'loja') renderShop();
 }
 
 function renderAdventurers() {
@@ -80,6 +80,8 @@ function renderAdventurers() {
     const canRecruit = gameState.gold >= recruitCost && gameState.adventurers.length < gameState.maxMembers;
     const recruitDisabled = canRecruit ? '' : 'disabled';
     const trainingLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('training_hall') : 0;
+
+    if (!Array.isArray(gameState.inventory)) gameState.inventory = [];
 
     let html = `
         <div class="recruit-panel">
@@ -97,6 +99,8 @@ function renderAdventurers() {
     `;
 
     gameState.adventurers.forEach(hero => {
+        if (!hero.equipment) hero.equipment = { weapon: null, armor: null, accessory: null };
+
         let statusBadge = '<span class="badge available">Pronto</span>';
         let healBtn = '';
 
@@ -113,6 +117,18 @@ function renderAdventurers() {
             ? ` <small style="color: #2ed573; font-weight: bold;">(+${xpPerSecond.toFixed(1)} XP/s)</small>` 
             : '';
 
+        // Exibição dos equipamentos atuais e seleção do inventário
+        const weaponText = hero.equipment.weapon ? `🗡️ ${hero.equipment.weapon.name} <button class="small-btn" onclick="unequipItem('${hero.id}', 'weapon')">✕</button>` : 'Nenhuma';
+        const armorText = hero.equipment.armor ? `🛡️ ${hero.equipment.armor.name} <button class="small-btn" onclick="unequipItem('${hero.id}', 'armor')">✕</button>` : 'Nenhuma';
+        const accText = hero.equipment.accessory ? `💍 ${hero.equipment.accessory.name} <button class="small-btn" onclick="unequipItem('${hero.id}', 'accessory')">✕</button>` : 'Nenhum';
+
+        // Itens do inventário disponíveis para equipar neste herói
+        const availInventoryOptions = gameState.inventory.length > 0 
+            ? gameState.inventory.map(item => `<option value="${item.uniqueId}">${item.name} (${item.slot.toUpperCase()})</option>`).join('')
+            : '<option value="">Inventário vazio</option>';
+
+        const equipDisabled = gameState.inventory.length === 0 || hero.status !== 'available' ? 'disabled' : '';
+
         html += `
             <div class="hero-card">
                 <div class="hero-header">
@@ -124,7 +140,14 @@ function renderAdventurers() {
                     <span>🛡️ DEF: ${hero.stats.defense}</span>
                     <span>⚡ SPD: ${hero.stats.speed}</span>
                 </div>
-                <div class="xp-container">
+                <div class="equipment-box">
+                    <small>Arma: ${weaponText} | Armadura: ${armorText} | Acessório: ${accText}</small>
+                </div>
+                <div class="equip-action" style="margin-top: 8px;">
+                    <select id="equip-select-${hero.id}" ${equipDisabled}>${availInventoryOptions}</select>
+                    <button class="action-btn" ${equipDisabled} onclick="handleEquipClick('${hero.id}')">Equipar</button>
+                </div>
+                <div class="xp-container" style="margin-top: 8px;">
                     <small>XP: <strong>${Math.floor(hero.xp)}</strong> / ${hero.maxXp}</small>${xpRateDisplay}
                 </div>
                 ${healBtn}
@@ -137,6 +160,37 @@ function renderAdventurers() {
     if (container.innerHTML !== html) {
         container.innerHTML = html;
     }
+}
+
+function handleEquipClick(heroId) {
+    const select = document.getElementById(`equip-select-${heroId}`);
+    if (select && select.value) {
+        equipItem(heroId, select.value);
+    }
+}
+
+function renderShop() {
+    const container = document.getElementById('shop-container');
+    if (!container) return;
+
+    let html = '<h3>Loja de Equipamentos da Guilda</h3><div class="shop-list" style="margin-top: 15px;">';
+
+    shopItemsList.forEach(item => {
+        const disabled = gameState.gold >= item.cost ? '' : 'disabled';
+
+        html += `
+            <div class="building-card">
+                <h4>${item.name} <small>(🪙 ${item.cost})</small></h4>
+                <p>${item.description}</p>
+                <button class="action-btn shop-btn" data-cost="${item.cost}" ${disabled} onclick="buyItem('${item.id}', event)">
+                    Comprar
+                </button>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 function renderQuests() {
@@ -196,7 +250,6 @@ function updateQuestPreview(questId) {
     if (hero && quest) {
         const chance = calculateSuccessChance(hero, quest);
         chanceElem.innerText = `${chance}%`;
-        // Remove classes antigas e insere a nova cor
         chanceElem.className = getChanceColorClass(chance);
     }
 }
