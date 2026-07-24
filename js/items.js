@@ -21,7 +21,7 @@ const Items = {
         { id: 'amuleto_luz', name: 'Amuleto da Luz', slot: 'secondary', classId: 'clerigo', cost: 150, passBonus: 0.08, icon: '📿', desc: '+8% Sucesso / Proteção Extra' }
     ],
 
-    currentModalContext: null, // Guarda { heroId, slot } para o modal
+    currentModalContext: null,
 
     buy(itemId) {
         const item = this.catalog.find(i => i.id === itemId);
@@ -40,7 +40,7 @@ const Items = {
     },
 
     openModal(heroId, slot) {
-        const hero = state.adventurers.find(a => a.id === heroId);
+        const hero = (state.adventurers || []).find(a => a.id === heroId);
         if (!hero) return;
 
         this.currentModalContext = { heroId, slot };
@@ -48,11 +48,12 @@ const Items = {
         const title = document.getElementById('modal-title');
         const container = document.getElementById('modal-items-list');
 
+        if (!modal || !title || !container) return;
+
         const slotName = slot === 'weapon' ? 'Arma Principal' : 'Item Secundário';
         title.innerText = `Equipar ${slotName} - ${hero.name}`;
 
-        // Buscar itens compatíveis do inventário não equipados
-        const equippedInstanceIds = state.adventurers.flatMap(a => [a.weaponInstanceId, a.secondaryInstanceId]).filter(Boolean);
+        const equippedInstanceIds = (state.adventurers || []).flatMap(a => [a.weaponInstanceId, a.secondaryInstanceId]).filter(Boolean);
 
         const availableInventory = (state.inventory || []).filter(inv => {
             const template = this.catalog.find(c => c.id === inv.itemId);
@@ -64,19 +65,18 @@ const Items = {
 
         let html = '';
 
-        // Opção para Desequipar se o herói já possui item nesse slot
         const currentEquippedId = slot === 'weapon' ? hero.weaponInstanceId : hero.secondaryInstanceId;
         if (currentEquippedId) {
             html += `
                 <div class="card" style="border-color: #e74c3c;">
                     <h3>Desequipar Item Atual</h3>
-                    <button class="action-btn" style="background:#e74c3c" onclick="Items.unequip('${heroId}', '${slot}')">Remover Item</button>
+                    <button class="action-btn" style="background:#e74c3c" onclick="Items.unequip(${heroId}, '${slot}')">Remover Item</button>
                 </div>
             `;
         }
 
         if (availableInventory.length === 0) {
-            html += '<p class="empty-msg" style="grid-column: 1/-1;">Nenhum item compatível no inventário. Compre no Ferreiro!</p>';
+            html += '<p style="grid-column: 1/-1; color: #aaa;">Nenhum item compatível no inventário. Compre no Ferreiro!</p>';
         } else {
             availableInventory.forEach(inv => {
                 const template = this.catalog.find(c => c.id === inv.itemId);
@@ -85,7 +85,7 @@ const Items = {
                         <div class="card-icon">${template.icon}</div>
                         <h3>${template.name}</h3>
                         <p>${template.desc}</p>
-                        <button class="action-btn" onclick="Items.equip('${heroId}', '${slot}', ${inv.instanceId})">
+                        <button class="action-btn" onclick="Items.equip(${heroId}, '${slot}', ${inv.instanceId})">
                             Equipar
                         </button>
                     </div>
@@ -104,7 +104,7 @@ const Items = {
     },
 
     equip(heroId, slot, instanceId) {
-        const hero = state.adventurers.find(a => a.id === Number(heroId));
+        const hero = (state.adventurers || []).find(a => a.id === Number(heroId));
         if (!hero) return;
 
         if (slot === 'weapon') hero.weaponInstanceId = instanceId;
@@ -113,10 +113,11 @@ const Items = {
         this.closeModal();
         if (typeof Adventurers !== 'undefined') Adventurers.render();
         if (typeof Quests !== 'undefined') Quests.render();
+        if (typeof UI !== 'undefined') UI.update();
     },
 
     unequip(heroId, slot) {
-        const hero = state.adventurers.find(a => a.id === Number(heroId));
+        const hero = (state.adventurers || []).find(a => a.id === Number(heroId));
         if (!hero) return;
 
         if (slot === 'weapon') hero.weaponInstanceId = null;
@@ -125,6 +126,7 @@ const Items = {
         this.closeModal();
         if (typeof Adventurers !== 'undefined') Adventurers.render();
         if (typeof Quests !== 'undefined') Quests.render();
+        if (typeof UI !== 'undefined') UI.update();
     },
 
     renderBlacksmith() {
