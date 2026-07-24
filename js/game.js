@@ -1,48 +1,46 @@
 /* ==========================================================================
-   GAME.JS - LOOP PRINCIPAL E INICIALIZAÇÃO
+   GAME.JS - LOOP PRINCIPAL DE TEMPO REAL
    ========================================================================== */
 
-// Função que roda a cada quadro do jogo (Loop)
 function gameLoop() {
     const now = Date.now();
-    const dt = (now - state.lastUpdate) / 1000; // Tempo passado em segundos
+    // Delta Time: tempo decorrido desde a última atualização em segundos
+    const dt = (now - state.lastUpdate) / 1000; 
     state.lastUpdate = now;
 
-    // 1. Calcula o Ganho Passivo de Ouro (GPS - Ouro por segundo)
-    let totalGps = 0;
-    if (typeof Adventurers !== 'undefined') {
-        totalGps = Adventurers.calculateTotalGPS();
-        state.gold += totalGps * dt;
+    // 1. Ganho passivo de Ouro (GPS)
+    if (typeof Adventurers !== 'undefined' && typeof Adventurers.calculateTotalGPS === 'function') {
+        const gps = Adventurers.calculateTotalGPS();
+        state.gold += gps * dt;
     }
 
-    // 2. Processa o progresso das Missões em andamento
-    if (typeof Quests !== 'undefined') {
+    // 2. Atualizar progresso das Missões ativas
+    if (typeof Quests !== 'undefined' && typeof Quests.updateActiveQuests === 'function') {
         Quests.updateActiveQuests(dt);
     }
 
-    // 3. Atualiza os textos e botões na tela
+    // 3. Atualizar a Interface do Usuário (Mostra os números na tela)
     if (typeof UI !== 'undefined' && typeof UI.update === 'function') {
         UI.update();
     }
 
-    // Salva o jogo automaticamente a cada segundo
-    saveGame();
-
-    // Chama o próximo quadro do loop
+    // Chama o próximo frame
     requestAnimationFrame(gameLoop);
 }
 
-// Quando a página termina de carregar no navegador:
-window.addEventListener('DOMContentLoaded', () => {
-    // 1. Carrega dados salvos (se existirem)
-    loadGame();
-
-    // 2. Renderiza a interface inicial completa
-    if (typeof UI !== 'undefined') {
-        UI.init();
-        UI.update();
+// Inicializa quando o HTML estiver totalmente carregado na tela
+document.addEventListener('DOMContentLoaded', () => {
+    // Carrega dados salvos do navegador se existirem
+    if (typeof loadGame === 'function') {
+        loadGame();
     }
 
-    // 3. Inicia o loop contínuo do jogo
+    // Renderiza a estrutura da UI
+    if (typeof UI !== 'undefined') {
+        UI.init();
+    }
+
+    // Inicia o Loop principal do jogo
+    state.lastUpdate = Date.now();
     requestAnimationFrame(gameLoop);
 });
