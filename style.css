@@ -21,7 +21,6 @@ body {
     padding: 15px;
 }
 
-/* Header & Top Stats */
 header {
     background-color: var(--bg-panel);
     padding: 15px;
@@ -42,7 +41,6 @@ header {
     font-weight: bold;
 }
 
-/* Navegação por Abas */
 nav.tabs {
     display: flex;
     gap: 10px;
@@ -66,7 +64,6 @@ nav.tabs {
     border-color: var(--accent-gold);
 }
 
-/* Conteúdo das Abas */
 .tab-content {
     display: none;
     background-color: var(--bg-panel);
@@ -79,7 +76,6 @@ nav.tabs {
     display: block;
 }
 
-/* Grid de Cards */
 .cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -100,7 +96,6 @@ nav.tabs {
     margin-bottom: 10px;
 }
 
-/* Botões de Ação */
 .action-btn {
     width: 100%;
     padding: 10px;
@@ -124,7 +119,18 @@ nav.tabs {
     opacity: 0.6;
 }
 
-/* Badges e Lista de Membros */
+.action-btn.heal-btn {
+    background-color: #e74c3c;
+    padding: 4px 8px;
+    width: auto;
+    margin-top: 0;
+    font-size: 0.8rem;
+}
+
+.action-btn.heal-btn:hover {
+    background-color: #c0392b;
+}
+
 .member-list {
     list-style: none;
     padding: 0;
@@ -135,6 +141,9 @@ nav.tabs {
     padding: 10px;
     border-radius: 4px;
     margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .badge {
@@ -142,6 +151,7 @@ nav.tabs {
     border-radius: 4px;
     font-size: 0.85rem;
     font-weight: bold;
+    display: inline-block;
 }
 
 .empty-msg {
