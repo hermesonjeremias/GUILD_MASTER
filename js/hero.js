@@ -43,7 +43,9 @@ class Hero {
     }
 
     gainXp(amount) {
-        this.xp += amount;
+        const numAmount = Number(amount) || 0;
+        this.xp += numAmount;
+
         while (this.xp >= this.maxXp) {
             this.xp -= this.maxXp;
             this.levelUp();
