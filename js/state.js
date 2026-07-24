@@ -1,47 +1,47 @@
 /* ==========================================================================
-   STATE.JS - ESTADO GLOBAL DO JOGO
+   STATE.JS - GERENCIAMENTO DE ESTADO E SALVAMENTO
    ========================================================================== */
 
-const state = {
-    // Recursos Iniciais
-    gold: 50,             // Começa com 50 de ouro para poder contratar o 1º herói!
+const SAVE_KEY = 'guild_clicker_save_v1';
+
+// Estado inicial do jogo
+let state = {
+    gold: 50,
     prestige: 0,
     maxMembers: 5,
-    
-    // Listas do Jogo
-    adventurers: [],
-    activeQuests: [],
-    inventory: [],
-    
-    // Níveis de Construções
-    buildings: {
-        tavern: 1,
-        training: 0,
-        market: 0
-    },
-
-    // Configurações e Tempos
-    lastUpdate: Date.now()
+    adventurers: [],  // Lista de heróis contratados
+    activeQuests: [], // Missões em andamento
+    buildings: {},    // Níveis das construções { tavern: 0, training: 0 }
+    lastTick: Date.now()
 };
 
-// Salva o estado atual no armazenamento do navegador
-function saveGame() {
-    localStorage.setItem('guilda_save', JSON.stringify(state));
-}
+const StateManager = {
+    save() {
+        try {
+            state.lastTick = Date.now();
+            localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+        } catch (e) {
+            console.error('Erro ao salvar o jogo:', e);
+        }
+    },
 
-// Carrega o estado salvo
-function loadGame() {
-    const saved = localStorage.getItem('guilda_save');
-    if (saved) {
-        const loadedState = JSON.parse(saved);
-        Object.assign(state, loadedState);
-    }
-}
+    load() {
+        try {
+            const savedData = localStorage.getItem(SAVE_KEY);
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                // Mescla os dados salvos com a estrutura padrão
+                state = { ...state, ...parsed };
+            }
+        } catch (e) {
+            console.error('Erro ao carregar o jogo:', e);
+        }
+    },
 
-// Reinicia o progresso
-function resetGame() {
-    if (confirm("Tem certeza que deseja reiniciar sua Guilda do zero?")) {
-        localStorage.removeItem('guilda_save');
-        location.reload();
+    reset() {
+        if (confirm('Tem certeza de que deseja reiniciar o seu progresso?')) {
+            localStorage.removeItem(SAVE_KEY);
+            location.reload();
+        }
     }
-}
+};
