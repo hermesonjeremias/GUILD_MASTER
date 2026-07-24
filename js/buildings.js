@@ -1,11 +1,11 @@
 /* ==========================================================================
-   BUILDINGS.JS - CONSTRUÇÕES DA GUILDA
+   BUILDINGS.JS - CONSTRUÇÕES E MELHORIAS DA GUILDA
    ========================================================================== */
 
 const Buildings = {
     list: [
         { id: 'tavern', name: 'Ampliar Taverna', baseCost: 100, mult: 1.5, desc: 'Aumenta a capacidade máxima da guilda em +2 membros.', icon: '🍺' },
-        { id: 'training', name: 'Campo de Treinamento', baseCost: 300, mult: 1.8, desc: 'Melhora as instalações da guilda.', icon: '🎯' }
+        { id: 'training', name: 'Campo de Treinamento', baseCost: 300, mult: 1.8, desc: 'Aumenta o Poder de Luta de todos os heróis em +10% por nível.', icon: '🎯' }
     ],
 
     upgrade(buildingId) {
@@ -24,6 +24,8 @@ const Buildings = {
             }
 
             this.render();
+            if (typeof Adventurers !== 'undefined') Adventurers.render();
+            if (typeof Quests !== 'undefined') Quests.render();
             if (typeof UI !== 'undefined') UI.update();
         }
     },
