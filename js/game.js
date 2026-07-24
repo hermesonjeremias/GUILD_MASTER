@@ -1,35 +1,32 @@
 /* ==========================================================================
-   GAME.JS - LOOP PRINCIPAL
+   GAME.JS - LOOP PRINCIPAL E INICIALIZAÇÃO
    ========================================================================== */
 
-let lastTime = Date.now();
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
 
-function gameLoop() {
-    const now = Date.now();
-    const dt = (now - lastTime) / 1000;
-    lastTime = now;
+    const selectedTab = document.getElementById(`tab-${tabId}`);
+    if (selectedTab) selectedTab.classList.add('active');
 
-    if (typeof Quests !== 'undefined' && Quests.updateActiveQuests) {
-        Quests.updateActiveQuests(dt);
-    }
-
-    if (typeof UI !== 'undefined' && UI.update) {
-        UI.update();
-    }
-
-    requestAnimationFrame(gameLoop);
+    const activeBtn = Array.from(document.querySelectorAll('.nav-btn'))
+        .find(btn => btn.getAttribute('onclick').includes(tabId));
+    if (activeBtn) activeBtn.classList.add('active');
 }
 
+// Inicialização quando a página carrega
 window.addEventListener('DOMContentLoaded', () => {
-    StateManager.load();
+    if (typeof UI !== 'undefined') UI.renderAll();
 
-    if (typeof UI !== 'undefined' && UI.init) {
-        UI.init();
-    }
-
+    // Loop do Jogo (10 vezes por segundo)
+    let lastTime = Date.now();
     setInterval(() => {
-        StateManager.save();
-    }, 10000);
+        const now = Date.now();
+        const dt = (now - lastTime) / 1000;
+        lastTime = now;
 
-    requestAnimationFrame(gameLoop);
+        if (typeof Quests !== 'undefined') {
+            Quests.updateActiveQuests(dt);
+        }
+    }, 100);
 });
