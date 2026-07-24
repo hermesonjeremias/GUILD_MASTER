@@ -9,7 +9,7 @@ const state = {
     adventurers: [],
     activeQuests: [],
     autoQuestsConfig: {},
-    inventory: [], // Essential for the Ferreiro/Items system
+    inventory: [],
     buildings: {
         training: 0,
         strategyTable: 0,
