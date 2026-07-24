@@ -1,305 +1,110 @@
 /* ==========================================================================
-   UI.JS - RENDERIZAÇÃO E INTERAÇÃO COM A TELA (COM LOJA E EQUIPAMENTOS)
+   UI.JS - GERENCIAMENTO E RENDERIZAÇÃO DA INTERFACE
    ========================================================================== */
 
-function triggerErrorEffect(element) {
-    if (!element) return;
-    element.classList.add('btn-error-shake');
-    setTimeout(() => element.classList.remove('btn-error-shake'), 400);
-}
+const UI = {
+    // Inicialização da interface na primeira carga
+    init() {
+        this.renderAll();
+    },
 
-function getChanceColorClass(chance) {
-    if (chance <= 25) return 'chance-red';
-    if (chance <= 50) return 'chance-orange';
-    if (chance <= 75) return 'chance-yellow';
-    if (chance <= 95) return 'chance-green';
-    return 'chance-blue';
-}
+    // Atualização constante (chamada dentro do Game Loop a cada segundo/frame)
+    update() {
+        // 1. Atualizar Painel de Recursos Superior
+        const goldDisplay = document.getElementById('gold-display');
+        const gpsDisplay = document.getElementById('gps-display');
+        const prestigeDisplay = document.getElementById('prestige-display');
+        const membersDisplay = document.getElementById('members-display');
 
-function updateUI() {
-    const goldElem = document.getElementById('gold-display');
-    const prestigeElem = document.getElementById('prestige-display');
-    const membersElem = document.getElementById('members-display');
-    const gpsElem = document.getElementById('gps-display');
-
-    const currentGold = Number(gameState.gold) || 0;
-    const gps = typeof calculateGoldPerSecond === 'function' ? calculateGoldPerSecond() : 0;
-
-    if (goldElem) goldElem.innerText = Math.floor(currentGold).toLocaleString();
-    if (gpsElem) gpsElem.innerText = gps.toFixed(1);
-    if (prestigeElem) prestigeElem.innerText = gameState.prestige;
-    if (membersElem) membersElem.innerText = `${gameState.adventurers.length}/${gameState.maxMembers}`;
-
-    updateButtonsState();
-
-    const activeTab = document.getElementById('tab-aventureiros');
-    if (activeTab && activeTab.classList.contains('active')) {
-        renderAdventurers();
-    }
-}
-
-function updateButtonsState() {
-    const currentGold = Number(gameState.gold) || 0;
-
-    const recruitCost = 40;
-    const canRecruit = currentGold >= recruitCost && gameState.adventurers.length < gameState.maxMembers;
-    document.querySelectorAll('.recruit-buttons .action-btn').forEach(btn => {
-        btn.disabled = !canRecruit;
-    });
-
-    document.querySelectorAll('.heal-btn').forEach(btn => {
-        btn.disabled = currentGold < 15;
-    });
-
-    document.querySelectorAll('.building-btn, .shop-btn').forEach(btn => {
-        const cost = Number(btn.getAttribute('data-cost')) || 0;
-        btn.disabled = currentGold < cost;
-    });
-}
-
-function switchTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-
-    const activeTab = document.getElementById(`tab-${tabName}`);
-    if (activeTab) activeTab.classList.add('active');
-
-    if (event && event.currentTarget) event.currentTarget.classList.add('active');
-
-    if (tabName === 'aventureiros') renderAdventurers();
-    if (tabName === 'missoes') renderQuests();
-    if (tabName === 'construcoes') renderBuildings();
-    if (tabName === 'loja') renderShop();
-}
-
-function renderAdventurers() {
-    const container = document.getElementById('adventurers-container');
-    if (!container) return;
-
-    const recruitCost = 40;
-    const canRecruit = gameState.gold >= recruitCost && gameState.adventurers.length < gameState.maxMembers;
-    const recruitDisabled = canRecruit ? '' : 'disabled';
-    const trainingLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('training_hall') : 0;
-
-    if (!Array.isArray(gameState.inventory)) gameState.inventory = [];
-
-    let html = `
-        <div class="recruit-panel">
-            <h3>Taverna de Recrutamento</h3>
-            <p>Contrate novos aventureiros (Custo: 🪙 ${recruitCost} Ouro)</p>
-            <div class="recruit-buttons">
-                <button class="action-btn" ${recruitDisabled} onclick="hireAdventurer('Guerreiro', ${recruitCost}, event)">🛡️ Guerreiro</button>
-                <button class="action-btn" ${recruitDisabled} onclick="hireAdventurer('Mago', ${recruitCost}, event)">🔮 Mago</button>
-                <button class="action-btn" ${recruitDisabled} onclick="hireAdventurer('Padre', ${recruitCost}, event)">✨ Padre</button>
-                <button class="action-btn" ${recruitDisabled} onclick="hireAdventurer('Arqueiro', ${recruitCost}, event)">🏹 Arqueiro</button>
-            </div>
-        </div>
-        <hr>
-        <div class="adventurers-list">
-    `;
-
-    gameState.adventurers.forEach(hero => {
-        if (!hero.equipment) hero.equipment = { weapon: null, armor: null, accessory: null };
-
-        let statusBadge = '<span class="badge available">Pronto</span>';
-        let healBtn = '';
-
-        if (hero.status === 'on_quest') {
-            statusBadge = '<span class="badge on-quest">Em Missão</span>';
-        } else if (hero.status === 'injured') {
-            statusBadge = `<span class="badge injured">Ferido (${Math.ceil(hero.injuryTimer)}s)</span>`;
-            const healDisabled = gameState.gold >= 15 ? '' : 'disabled';
-            healBtn = `<button class="action-btn heal-btn" ${healDisabled} onclick="healHero('${hero.id}', 15, event)">🧪 Curar (🪙 15)</button>`;
+        if (goldDisplay) {
+            goldDisplay.textContent = Math.floor(state.gold).toLocaleString('pt-BR');
         }
 
-        const xpPerSecond = (trainingLevel > 0 && hero.status === 'available') ? trainingLevel : 0;
-        const xpRateDisplay = xpPerSecond > 0 
-            ? ` <small style="color: #2ed573; font-weight: bold;">(+${xpPerSecond.toFixed(1)} XP/s)</small>` 
-            : '';
+        if (gpsDisplay) {
+            const gps = (typeof Adventurers !== 'undefined' && Adventurers.calculateTotalGPS) 
+                ? Adventurers.calculateTotalGPS() 
+                : 0;
+            gpsDisplay.textContent = gps.toFixed(1);
+        }
 
-        // Exibição dos equipamentos atuais e seleção do inventário
-        const weaponText = hero.equipment.weapon ? `🗡️ ${hero.equipment.weapon.name} <button class="small-btn" onclick="unequipItem('${hero.id}', 'weapon')">✕</button>` : 'Nenhuma';
-        const armorText = hero.equipment.armor ? `🛡️ ${hero.equipment.armor.name} <button class="small-btn" onclick="unequipItem('${hero.id}', 'armor')">✕</button>` : 'Nenhuma';
-        const accText = hero.equipment.accessory ? `💍 ${hero.equipment.accessory.name} <button class="small-btn" onclick="unequipItem('${hero.id}', 'accessory')">✕</button>` : 'Nenhum';
+        if (prestigeDisplay) {
+            prestigeDisplay.textContent = (state.prestige || 0).toLocaleString('pt-BR');
+        }
 
-        // Itens do inventário disponíveis para equipar neste herói
-        const availInventoryOptions = gameState.inventory.length > 0 
-            ? gameState.inventory.map(item => `<option value="${item.uniqueId}">${item.name} (${item.slot.toUpperCase()})</option>`).join('')
-            : '<option value="">Inventário vazio</option>';
+        if (membersDisplay) {
+            const currentMembers = state.adventurers ? state.adventurers.length : 0;
+            membersDisplay.textContent = `${currentMembers}/${state.maxMembers || 5}`;
+        }
 
-        const equipDisabled = gameState.inventory.length === 0 || hero.status !== 'available' ? 'disabled' : '';
+        // 2. Atualizar estado de botões e missões ativas
+        this.updateButtonsState();
+        this.updateActiveQuestsUI();
+    },
 
-        html += `
-            <div class="hero-card">
-                <div class="hero-header">
-                    <h4>${hero.name} <small>(Nv. ${hero.level} ${hero.heroClass})</small></h4>
-                    ${statusBadge}
+    // Renderiza o conteúdo estático inicial de todas as abas
+    renderAll() {
+        if (typeof Adventurers !== 'undefined' && Adventurers.render) Adventurers.render();
+        if (typeof Quests !== 'undefined' && Quests.render) Quests.render();
+        if (typeof Buildings !== 'undefined' && Buildings.render) Buildings.render();
+        if (typeof Shop !== 'undefined' && Shop.render) Shop.render();
+    },
+
+    // Atualiza progresso visual das missões em tempo real
+    updateActiveQuestsUI() {
+        const container = document.getElementById('active-quests-container');
+        if (!container) return;
+
+        if (!state.activeQuests || state.activeQuests.length === 0) {
+            container.innerHTML = '<p class="empty-msg">Nenhuma missão em andamento no momento.</p>';
+            return;
+        }
+
+        let html = '<h3>📜 Missões em Andamento</h3>';
+        state.activeQuests.forEach(quest => {
+            const progressPct = Math.min(100, Math.max(0, (quest.elapsed / quest.duration) * 100));
+            const remaining = Math.max(0, Math.ceil(quest.duration - quest.elapsed));
+
+            html += `
+                <div class="active-quest-item">
+                    <div>
+                        <strong>${quest.title}</strong> (${quest.heroName})
+                        <br><small>Tempo restante: ${remaining}s</small>
+                    </div>
+                    <div style="width: 40%; background: #1a1a24; border-radius: 4px; overflow: hidden; height: 16px; margin-top: 5px;">
+                        <div style="width: ${progressPct}%; background: #ffa502; height: 100%; transition: width 0.2s linear;"></div>
+                    </div>
                 </div>
-                <div class="hero-stats">
-                    <span>⚔️ PWR: ${hero.stats.power}</span>
-                    <span>🛡️ DEF: ${hero.stats.defense}</span>
-                    <span>⚡ SPD: ${hero.stats.speed}</span>
-                </div>
-                <div class="equipment-box">
-                    <small>Arma: ${weaponText} | Armadura: ${armorText} | Acessório: ${accText}</small>
-                </div>
-                <div class="equip-action" style="margin-top: 8px;">
-                    <select id="equip-select-${hero.id}" ${equipDisabled}>${availInventoryOptions}</select>
-                    <button class="action-btn" ${equipDisabled} onclick="handleEquipClick('${hero.id}')">Equipar</button>
-                </div>
-                <div class="xp-container" style="margin-top: 8px;">
-                    <small>XP: <strong>${Math.floor(hero.xp)}</strong> / ${hero.maxXp}</small>${xpRateDisplay}
-                </div>
-                ${healBtn}
-            </div>
-        `;
-    });
+            `;
+        });
 
-    html += '</div>';
-
-    if (container.innerHTML !== html) {
         container.innerHTML = html;
+    },
+
+    // Desativa botões visualmente se o jogador não tiver ouro suficiente
+    updateButtonsState() {
+        const actionButtons = document.querySelectorAll('.action-btn[data-cost]');
+        actionButtons.forEach(btn => {
+            const cost = parseFloat(btn.getAttribute('data-cost'));
+            if (!isNaN(cost)) {
+                btn.disabled = state.gold < cost;
+            }
+        });
     }
-}
+};
 
-function handleEquipClick(heroId) {
-    const select = document.getElementById(`equip-select-${heroId}`);
-    if (select && select.value) {
-        equipItem(heroId, select.value);
-    }
-}
+// Lógica de Troca de Abas
+function switchTab(tabId) {
+    const tabs = document.querySelectorAll('.tab-content');
+    const buttons = document.querySelectorAll('.nav-btn');
 
-function renderShop() {
-    const container = document.getElementById('shop-container');
-    if (!container) return;
+    tabs.forEach(tab => tab.classList.remove('active'));
+    buttons.forEach(btn => btn.classList.remove('active'));
 
-    let html = '<h3>Loja de Equipamentos da Guilda</h3><div class="shop-list" style="margin-top: 15px;">';
-
-    shopItemsList.forEach(item => {
-        const disabled = gameState.gold >= item.cost ? '' : 'disabled';
-
-        html += `
-            <div class="building-card">
-                <h4>${item.name} <small>(🪙 ${item.cost})</small></h4>
-                <p>${item.description}</p>
-                <button class="action-btn shop-btn" data-cost="${item.cost}" ${disabled} onclick="buyItem('${item.id}', event)">
-                    Comprar
-                </button>
-            </div>
-        `;
-    });
-
-    html += '</div>';
-    container.innerHTML = html;
-}
-
-function renderQuests() {
-    const container = document.getElementById('quests-container');
-    if (!container) return;
-
-    let html = '';
-    const availableHeroes = gameState.adventurers.filter(h => h.status === 'available');
-
-    availableQuestsList.forEach(quest => {
-        let selectOptions = availableHeroes.length > 0 
-            ? availableHeroes.map(h => `<option value="${h.id}">${h.name} (Nv. ${h.level})</option>`).join('')
-            : '<option value="">Nenhum herói disponível</option>';
-
-        const disabled = availableHeroes.length === 0 ? 'disabled' : '';
-
-        let chancePreview = '--';
-        let chanceClass = '';
-        let timePreview = quest.baseDuration;
-
-        if (availableHeroes.length > 0) {
-            const selectedHero = availableHeroes[0];
-            const numericChance = calculateSuccessChance(selectedHero, quest);
-            chancePreview = `${numericChance}%`;
-            chanceClass = getChanceColorClass(numericChance);
-            timePreview = Math.ceil(calculateQuestDuration(selectedHero, quest));
-        }
-
-        html += `
-            <div class="quest-card">
-                <h4>${quest.title} <small>⏳ ~${timePreview}s | PWR Req: ${quest.requiredPower}</small></h4>
-                <p>${quest.description}</p>
-                <div class="rewards">
-                    <span>🪙 +${quest.goldReward}</span>
-                    <span>⭐ +${quest.xpReward} XP</span>
-                    <span>🎯 Chance: <span id="chance-${quest.id}" class="${chanceClass}">${chancePreview}</span></span>
-                </div>
-                <div class="quest-actions">
-                    <select id="select-hero-${quest.id}" ${disabled} onchange="updateQuestPreview('${quest.id}')">${selectOptions}</select>
-                    <button class="action-btn" ${disabled} onclick="handleStartQuestClick('${quest.id}')">Enviar</button>
-                </div>
-            </div>
-        `;
-    });
-
-    container.innerHTML = html;
-}
-
-function updateQuestPreview(questId) {
-    const select = document.getElementById(`select-hero-${questId}`);
-    const chanceElem = document.getElementById(`chance-${questId}`);
-    if (!select || !chanceElem) return;
-
-    const hero = gameState.adventurers.find(h => h.id === select.value);
-    const quest = availableQuestsList.find(q => q.id === questId);
-
-    if (hero && quest) {
-        const chance = calculateSuccessChance(hero, quest);
-        chanceElem.innerText = `${chance}%`;
-        chanceElem.className = getChanceColorClass(chance);
-    }
-}
-
-function handleStartQuestClick(questId) {
-    const select = document.getElementById(`select-hero-${questId}`);
-    if (select && select.value) {
-        startQuest(questId, select.value);
-    }
-}
-
-function updateActiveQuestsUI() {
-    const container = document.getElementById('active-quests-container');
-    if (!container) return;
-
-    if (!gameState.activeQuests || gameState.activeQuests.length === 0) {
-        container.innerHTML = '<p class="empty-msg">Nenhuma missão em andamento.</p>';
-        return;
+    const selectedTab = document.getElementById(`tab-${tabId}`);
+    if (selectedTab) {
+        selectedTab.classList.add('active');
     }
 
-    container.innerHTML = '<h3>Missões em Andamento</h3>' + gameState.activeQuests.map(q => {
-        const chanceClass = getChanceColorClass(q.successChance);
-        return `
-            <div class="active-quest-item">
-                <span>⚔️ <strong>${q.heroName}</strong> em "${q.title}" <small class="${chanceClass}">(${q.successChance}% Chance)</small></span>
-                <span>⏳ ${Math.ceil(q.timeRemaining)}s restante</span>
-            </div>
-        `;
-    }).join('');
-}
-
-function renderBuildings() {
-    const container = document.getElementById('buildings-container');
-    if (!container) return;
-
-    let html = '';
-    availableBuildings.forEach(b => {
-        const cost = Math.floor(b.baseCost * Math.pow(b.costMultiplier, b.level));
-        const disabled = gameState.gold >= cost ? '' : 'disabled';
-
-        html += `
-            <div class="building-card">
-                <h4>${b.name} <small>(Nível ${b.level})</small></h4>
-                <p>${b.description}</p>
-                <button class="action-btn building-btn" data-cost="${cost}" ${disabled} onclick="upgradeBuilding('${b.id}', event)">
-                    ${b.level === 0 ? 'Construir' : 'Evoluir'} (🪙 ${cost})
-                </button>
-            </div>
-        `;
-    });
-
-    container.innerHTML = html;
+    // Ativa o botão correto da barra de navegação
+    event.currentTarget.classList.add('active');
 }
