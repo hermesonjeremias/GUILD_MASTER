@@ -70,6 +70,7 @@ function renderAdventurers() {
     const recruitCost = 40;
     const canRecruit = gameState.gold >= recruitCost && gameState.adventurers.length < gameState.maxMembers;
     const recruitDisabled = canRecruit ? '' : 'disabled';
+    const trainingLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('training_hall') : 0;
 
     let html = `
         <div class="recruit-panel">
@@ -98,6 +99,11 @@ function renderAdventurers() {
             healBtn = `<button class="action-btn heal-btn" ${healDisabled} onclick="healHero('${hero.id}', 15, event)">🧪 Curar (🪙 15)</button>`;
         }
 
+        // Tag indicativa de treino quando o Centro de Treinamento está ativo
+        const trainingTag = (trainingLevel > 0 && hero.status === 'available') 
+            ? ` <small style="color: #2ed573;">⚡ (+${trainingLevel} XP/s)</small>` 
+            : '';
+
         html += `
             <div class="hero-card">
                 <div class="hero-header">
@@ -109,7 +115,7 @@ function renderAdventurers() {
                     <span>🛡️ Defesa: ${hero.stats.defense}</span>
                 </div>
                 <div class="xp-container">
-                    <small>XP: ${Math.floor(hero.xp)} / ${hero.maxXp}</small>
+                    <small>XP: ${Math.floor(hero.xp)} / ${hero.maxXp}</small>${trainingTag}
                 </div>
                 ${healBtn}
             </div>
