@@ -1,337 +1,154 @@
 /* ==========================================================================
-   STYLE.CSS - GUILDA DOS AVENTUREIROS (CÓDIGO COMPLETO)
+   STYLES.CSS - ESTILOS E VISUAL DO JOGO
    ========================================================================== */
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+:root {
+    --bg-dark: #121218;
+    --bg-panel: #1a1a24;
+    --bg-card: #242434;
+    --accent-gold: #f1c40f;
+    --text-color: #f5f5f7;
+    --border-color: #333348;
 }
 
 body {
-    background-color: #1a1a24;
-    color: #e0e0e0;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-color);
 }
 
-/* PAINEL SUPERIOR DE RECURSOS */
-#resource-bar {
-    background-color: #0f0f17;
-    border-bottom: 2px solid #3a3a50;
-    padding: 12px 20px;
+#app {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 15px;
+}
+
+/* Header & Top Stats */
+header {
+    background-color: var(--bg-panel);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+}
+
+.stats-bar {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: space-around;
     flex-wrap: wrap;
     gap: 10px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
 }
 
-.resource-item {
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.resource-item strong {
-    color: #ffd700;
+.stat-item {
     font-size: 1.1rem;
-}
-
-.gps-tag {
-    color: #2ed573;
     font-weight: bold;
 }
 
-.reset-btn {
-    background-color: #ff4757;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: bold;
-    transition: background 0.2s;
-}
-
-.reset-btn:hover {
-    background-color: #ff6b81;
-}
-
-/* NAVEGAÇÃO DE ABAS */
-#tabs-navigation {
+/* Navegação por Abas */
+nav.tabs {
     display: flex;
-    background-color: #252533;
-    border-bottom: 1px solid #3a3a50;
+    gap: 10px;
+    margin-bottom: 15px;
 }
 
 .nav-btn {
     flex: 1;
-    padding: 14px;
-    background: none;
-    border: none;
-    color: #a0a0b0;
-    font-size: 1rem;
-    font-weight: bold;
+    padding: 12px;
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 6px;
     cursor: pointer;
+    font-weight: bold;
     transition: all 0.2s;
-    border-bottom: 3px solid transparent;
 }
 
-.nav-btn:hover {
-    background-color: #2e2e3f;
-    color: #fff;
+.nav-btn.active, .nav-btn:hover {
+    background-color: #2c2c3e;
+    border-color: var(--accent-gold);
 }
 
-.nav-btn.active {
-    color: #ffd700;
-    border-bottom: 3px solid #ffd700;
-    background-color: #1a1a24;
-}
-
-/* CONTEÚDO PRINCIPAL E ABAS */
-#game-content {
-    padding: 20px;
-    max-width: 900px;
-    width: 100%;
-    margin: 0 auto;
-    flex: 1;
-}
-
+/* Conteúdo das Abas */
 .tab-content {
     display: none;
+    background-color: var(--bg-panel);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
 }
 
 .tab-content.active {
     display: block;
 }
 
-/* COMPONENTES DA TAVERNA E RECRUTAMENTO */
-.recruit-panel {
-    background-color: #252533;
+/* Grid de Cards */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.card {
+    background-color: var(--bg-card);
     padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    border: 1px solid #3a3a50;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    text-align: center;
 }
 
-.recruit-panel h3 {
-    margin-bottom: 8px;
-    color: #ffd700;
-}
-
-.recruit-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    flex-wrap: wrap;
-}
-
-/* CARDS DE HERÓIS, MISSÕES E CONSTRUÇÕES */
-.hero-card, .quest-card, .building-card {
-    background-color: #252533;
-    border: 1px solid #3a3a50;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-}
-
-.hero-header, .building-card h4, .quest-card h4 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.card-icon {
+    font-size: 2rem;
     margin-bottom: 10px;
 }
 
-.hero-stats, .rewards {
-    display: flex;
-    gap: 15px;
-    margin: 10px 0;
-    font-size: 0.9rem;
-    color: #ccc;
-}
-
-/* BADGES DE STATUS DOS HERÓIS */
-.badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
-}
-
-.badge.available {
-    background-color: #2ed573;
-    color: #000;
-}
-
-.badge.on-quest {
-    background-color: #ffa502;
-    color: #000;
-}
-
-.badge.injured {
-    background-color: #ff4757;
-    color: #fff;
-}
-
-/* BOTÕES E AÇÕES DA INTERFACE */
+/* Botões de Ação */
 .action-btn {
-    background-color: #3742fa;
+    width: 100%;
+    padding: 10px;
+    background-color: #27ae60;
     color: white;
     border: none;
-    padding: 8px 14px;
     border-radius: 4px;
-    cursor: pointer;
     font-weight: bold;
-    transition: all 0.25s ease;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.2s;
 }
 
 .action-btn:hover:not(:disabled) {
-    background-color: #5352ed;
+    background-color: #2ecc71;
 }
 
-/* ESTILO DOS BOTÕES SEM GOLD OU INDISPONÍVEIS (Escuros e apagados) */
-.action-btn:disabled, select:disabled {
-    background-color: #1a1a24 !important;
-    color: #555566 !important;
-    border: 1px solid #2d2d3a !important;
-    cursor: not-allowed !important;
-    opacity: 0.55;
-    box-shadow: none !important;
+.action-btn:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
-/* PAINEL DE MISSÕES ATIVAS */
-.active-quests-box {
-    background-color: #1e1e2d;
-    border: 1px solid #ffa502;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 20px;
+/* Badges e Lista de Membros */
+.member-list {
+    list-style: none;
+    padding: 0;
 }
 
-.active-quest-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #3a3a50;
-}
-
-.active-quest-item:last-child {
-    border-bottom: none;
-}
-
-.quest-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.quest-actions select {
-    flex: 1;
-    padding: 8px;
-    background-color: #1a1a24;
-    color: #fff;
-    border: 1px solid #3a3a50;
+.member-list li {
+    background-color: var(--bg-card);
+    padding: 10px;
     border-radius: 4px;
+    margin-bottom: 8px;
 }
 
-/* CAIXA DE EQUIPAMENTOS E BOTÕES DE REINO */
-.equipment-box {
-    background-color: #1a1a24;
-    padding: 6px 10px;
+.badge {
+    padding: 3px 8px;
     border-radius: 4px;
-    margin-top: 8px;
-    color: #bbb;
-}
-
-.small-btn {
-    background-color: #ff4757;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    padding: 0 5px;
-    cursor: pointer;
-    font-size: 0.75rem;
-    margin-left: 4px;
-}
-
-.equip-action {
-    display: flex;
-    gap: 8px;
-}
-
-.equip-action select {
-    flex: 1;
-    background-color: #1a1a24;
-    color: white;
-    border: 1px solid #3a3a50;
-    border-radius: 4px;
-    padding: 4px 8px;
-}
-
-/* ANIMAÇÃO DE ERRO (FEEDBACK VISUAL) */
-.btn-error-shake {
-    animation: shake 0.4s ease-in-out;
-    background-color: #ff4757 !important;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    20%, 60% { transform: translateX(-6px); }
-    40%, 80% { transform: translateX(6px); }
-}
-
-hr {
-    border: 0;
-    height: 1px;
-    background: #3a3a50;
-    margin: 20px 0;
+    font-size: 0.85rem;
+    font-weight: bold;
 }
 
 .empty-msg {
     color: #888;
     font-style: italic;
-    text-align: center;
-    padding: 10px;
-}
-
-/* ==========================================================================
-   CLASSES DE CORES PARA CHANCE DE SUCESSO DAS MISSÕES (5 ESCALAS)
-   ========================================================================== */
-
-/* 🔵 Azul: Garantido (96% - 100%) */
-.chance-blue {
-    color: #00d2d3 !important;
-    font-weight: bold;
-}
-
-/* 🟢 Verde: Seguro (76% - 95%) */
-.chance-green {
-    color: #2ed573 !important;
-    font-weight: bold;
-}
-
-/* 🟡 Amarelo: Moderado (51% - 75%) */
-.chance-yellow {
-    color: #ffa502 !important;
-    font-weight: bold;
-}
-
-/* 🟠 Laranja: Arriscado (26% - 50%) */
-.chance-orange {
-    color: #ff7f50 !important;
-    font-weight: bold;
-}
-
-/* 🔴 Vermelho: Perigo Extremo (0% - 25%) */
-.chance-red {
-    color: #ff4757 !important;
-    font-weight: bold;
 }
