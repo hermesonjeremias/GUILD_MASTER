@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guild Incremental Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <div class="stats-bar">
+                <div class="stat-item">🪙 Ouro: <span id="gold-display">0</span></div>
+                <div class="stat-item">⚡ GPS: <span id="gps-display">0</span></div>
+                <div class="stat-item">👥 Membros: <span id="members-display">0/5</span></div>
+                <div class="stat-item">🚩 Prestígio: <span id="prestige-display">0</span></div>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="nav-btn active" onclick="switchTab('aventureiros')">Aventureiros</button>
+            <button class="nav-btn" onclick="switchTab('missoes')">Missões</button>
+            <button class="nav-btn" onclick="switchTab('construcoes')">Construções</button>
+        </nav>
+
+        <main>
+            <div id="tab-aventureiros" class="tab-content active">
+                <div id="adventurers-container"></div>
+            </div>
+            <div id="tab-missoes" class="tab-content">
+                <div id="quests-container"></div>
+                <div id="active-quests-container" style="margin-top: 20px;"></div>
+            </div>
+            <div id="tab-construcoes" class="tab-content">
+                <div id="buildings-container"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts em Ordem de Dependência -->
+    <script src="js/state.js"></script>
+    <script src="js/adventurers.js"></script>
+    <script src="js/quests.js"></script>
+    <script src="js/buildings.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
