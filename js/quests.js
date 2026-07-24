@@ -1,5 +1,5 @@
 /* ==========================================================================
-   QUESTS.JS - MISSÕES, PREVIEW DE BÔNUS/RISCO, AUTOMAÇÃO E RESGATE
+   QUESTS.JS - MISSÕES (COM TRAVA DE HERÓI ÚNICO E MISSÃO ÚNICA)
    ========================================================================== */
 
 const Quests = {
@@ -80,7 +80,6 @@ const Quests = {
         return Array.from(checkboxes).map(cb => Number(cb.value));
     },
 
-    // Função chamada toda vez que o jogador marca/desmarca um herói
     updatePreview(questId) {
         const quest = this.available.find(q => q.id === questId);
         if (!quest) return;
@@ -128,6 +127,13 @@ const Quests = {
     },
 
     startQuest(questId, isAutoTrigger = false) {
+        // REGRA DE BLOQUEIO 1: Checar se a missão já está em andamento
+        const isAlreadyActive = (state.activeQuests || []).some(q => q.id === questId);
+        if (isAlreadyActive) {
+            if (!isAutoTrigger) alert('Esta missão já está em andamento por outro grupo!');
+            return;
+        }
+
         const quest = this.available.find(q => q.id === questId);
         if (!quest) return;
 
@@ -146,23 +152,26 @@ const Quests = {
             return;
         }
 
+        // REGRA DE BLOQUEIO 2: Checar se TODOS os heróis selecionados estão 100% disponíveis
+        const partyStats = this.calculatePartyStats(selectedIds, quest, !!state.autoQuestsConfig[questId]);
+        const isAnyHeroBusy = partyStats.heroes.some(h => h.status !== 'available');
+
+        if (isAnyHeroBusy) {
+            if (!isAutoTrigger) alert('Um ou mais heróis selecionados estão ocupados ou feridos!');
+            return;
+        }
+
         if (!isAutoTrigger) {
             state.autoQuestsConfig[`${questId}_ids`] = selectedIds;
         }
 
-        const isAutoActive = !!state.autoQuestsConfig[questId];
-        const partyStats = this.calculatePartyStats(selectedIds, quest, isAutoActive);
-        if (!partyStats || partyStats.heroes.length === 0) return;
-
-        const unavailable = partyStats.heroes.some(h => quest.safe ? h.status === 'on-quest' : h.status !== 'available');
-        if (unavailable) return;
-
+        // Marca o status de todos os heróis da party como 'on-quest'
         partyStats.heroes.forEach(h => h.status = 'on-quest');
 
         state.activeQuests.push({
             ...quest,
             instanceId: Date.now(),
-            isAuto: isAutoActive,
+            isAuto: !!state.autoQuestsConfig[questId],
             partyIds: selectedIds,
             partyNames: partyStats.heroes.map(h => h.name).join(', '),
             totalPower: partyStats.totalPower,
@@ -241,48 +250,48 @@ const Quests = {
         let html = `<h2>📜 Mural de Missões (Max/Party: ${maxParty})</h2><div class="cards-grid">`;
         
         this.available.forEach(quest => {
-            const candidateHeroes = (state.adventurers || []).filter(a => 
-                quest.safe ? a.status !== 'on-quest' : a.status === 'available'
-            );
+            // Verifica se esta missão já está sendo executada
+            const isQuestRunning = (state.activeQuests || []).some(q => q.id === quest.id);
+
+            // Heróis elegíveis: Apenas os que estão de fato 'available' (livres e não feridos)
+            const availableHeroes = (state.adventurers || []).filter(a => a.status === 'available');
 
             let partyHtml = '';
-            if (candidateHeroes.length > 0) {
-                partyHtml = candidateHeroes.map(h => {
+            if (availableHeroes.length > 0) {
+                partyHtml = availableHeroes.map(h => {
                     const power = Adventurers.getEffectivePower(h);
-                    const isInjured = h.status === 'injured' ? ' (Ferido)' : '';
                     return `
                         <label class="party-item">
-                            <input type="checkbox" class="party-check-${quest.id}" value="${h.id}" onchange="Quests.updatePreview('${quest.id}')">
-                            <span>${h.name}${isInjured} - ⚔️${power}</span>
+                            <input type="checkbox" class="party-check-${quest.id}" value="${h.id}" onchange="Quests.updatePreview('${quest.id}')" ${isQuestRunning ? 'disabled' : ''}>
+                            <span>${h.name} - ⚔️${power}</span>
                         </label>
                     `;
                 }).join('');
             } else {
-                partyHtml = '<p class="empty-msg" style="font-size: 0.8rem;">Nenhum herói disponível.</p>';
+                partyHtml = '<p class="empty-msg" style="font-size: 0.8rem;">Nenhum herói disponível no momento.</p>';
             }
 
             const isAutoEnabled = !!state.autoQuestsConfig[quest.id];
             const autoUnlocked = officersLvl > 0;
 
             html += `
-                <div class="card">
+                <div class="card ${isQuestRunning ? 'card-disabled' : ''}">
                     <div class="card-icon">${quest.icon}</div>
-                    <h3>${quest.title}</h3>
+                    <h3>${quest.title} ${isQuestRunning ? '⏳ (Em Andamento)' : ''}</h3>
                     <p>Duração Base: ${quest.duration}s | Rec: 💰 ${quest.rewardGold} | XP: ⭐ ${quest.rewardXp}</p>
                     <p>Poder Requerido: ⚔️ ${quest.reqPower}</p>
 
                     <div class="party-selector">
-                        <strong style="font-size: 0.8rem; display: block; margin-bottom: 4px;">Seleção de Party (Max ${maxParty}):</strong>
+                        <strong style="font-size: 0.8rem; display: block; margin-bottom: 4px;">Seleção de Party:</strong>
                         ${partyHtml}
                     </div>
 
-                    <!-- Painel de Preview Dinâmico -->
                     <div id="preview-${quest.id}" style="background: #111; padding: 8px; border-radius: 4px; margin: 8px 0; font-size: 0.85rem; text-align: left;">
                         <span style="color:#aaa;">Selecione heróis para ver a estimativa.</span>
                     </div>
 
-                    <button class="action-btn" onclick="Quests.startQuest('${quest.id}')" ${candidateHeroes.length === 0 ? 'disabled' : ''}>
-                        Enviar Grupo
+                    <button class="action-btn" onclick="Quests.startQuest('${quest.id}')" ${isQuestRunning || availableHeroes.length === 0 ? 'disabled' : ''}>
+                        ${isQuestRunning ? 'Em Andamento...' : 'Enviar Grupo'}
                     </button>
 
                     ${autoUnlocked ? `
