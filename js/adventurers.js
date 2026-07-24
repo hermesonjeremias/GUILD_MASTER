@@ -20,12 +20,13 @@ const Adventurers = {
     },
 
     getEffectivePower(adv) {
+        if (!adv) return 0;
         let basePower = adv.power || 10;
         
-        // Adicionar Poder da Arma Equipada
-        if (adv.weaponInstanceId && state.inventory) {
+        // Poder da Arma
+        if (adv.weaponInstanceId && state.inventory && typeof Items !== 'undefined') {
             const inv = state.inventory.find(i => i.instanceId === adv.weaponInstanceId);
-            if (inv && Items.catalog) {
+            if (inv) {
                 const itemDef = Items.catalog.find(c => c.id === inv.itemId);
                 if (itemDef && itemDef.power) basePower += itemDef.power;
             }
@@ -33,9 +34,9 @@ const Adventurers = {
 
         const level = adv.level || 1;
         
-        // Passiva Guerreiro (com bônus do item secundário se houver)
+        // Passiva de Nível
         let levelMult = adv.classId === 'guerreiro' ? 0.10 : 0.05;
-        if (adv.classId === 'guerreiro' && adv.secondaryInstanceId) {
+        if (adv.classId === 'guerreiro' && adv.secondaryInstanceId && state.inventory && typeof Items !== 'undefined') {
             const inv = state.inventory.find(i => i.instanceId === adv.secondaryInstanceId);
             if (inv) {
                 const itemDef = Items.catalog.find(c => c.id === inv.itemId);
@@ -44,7 +45,6 @@ const Adventurers = {
         }
 
         const levelBonus = 1 + ((level - 1) * levelMult);
-
         const trainingLvl = (state.buildings && state.buildings.training) || 0;
         const buildingBonus = 1 + (trainingLvl * 0.10);
 
@@ -74,7 +74,8 @@ const Adventurers = {
         const template = this.classes.find(c => c.id === classId);
         if (!template) return;
 
-        const totalHired = (state.adventurers || []).length;
+        if (!state.adventurers) state.adventurers = [];
+        const totalHired = state.adventurers.length;
         const cost = Math.floor(template.baseCost * Math.pow(1.25, totalHired));
 
         if (state.gold >= cost && totalHired < state.maxMembers) {
@@ -99,7 +100,7 @@ const Adventurers = {
     },
 
     heal(heroId) {
-        const hero = state.adventurers.find(a => a.id === heroId);
+        const hero = (state.adventurers || []).find(a => a.id === heroId);
         if (!hero || hero.status !== 'injured') return;
 
         const healCost = hero.level * 15;
@@ -113,7 +114,7 @@ const Adventurers = {
     },
 
     getEquippedItemName(instanceId) {
-        if (!instanceId || !state.inventory) return 'Vazio';
+        if (!instanceId || !state.inventory || typeof Items === 'undefined') return 'Vazio';
         const inv = state.inventory.find(i => i.instanceId === instanceId);
         if (!inv) return 'Vazio';
         const template = Items.catalog.find(c => c.id === inv.itemId);
@@ -140,7 +141,6 @@ const Adventurers = {
                     <p style="font-size: 0.85rem; color: #aaa;">${cls.desc}</p>
                     <p>Poder Base: ⚔️ ${cls.power}</p>
                     <button class="action-btn" 
-                            data-cost="${cost}"
                             onclick="Adventurers.hire('${cls.id}')" 
                             ${(!canAfford || !hasSpace) ? 'disabled' : ''}>
                         Recrutar (${cost} 🪙)
@@ -162,7 +162,7 @@ const Adventurers = {
                 if (adv.status === 'injured') {
                     const healCost = adv.level * 15;
                     statusTxt = '<span style="color:#e74c3c">Ferido 🩹</span>';
-                    healAction = `<button class="action-btn heal-btn" onclick="Adventurers.heal(${adv.id})">Tratar (${healCost} 🪙)</button>`;
+                    healAction = `<button class="action-btn" style="background:#e74c3c; width:auto; padding:5px 10px; margin:0;" onclick="Adventurers.heal(${adv.id})">Tratar (${healCost} 🪙)</button>`;
                 }
 
                 const xpPct = Math.floor((adv.xp / adv.maxXp) * 100);
@@ -188,7 +188,7 @@ const Adventurers = {
             });
             html += '</ul>';
         } else {
-            html += '<p class="empty-msg">Nenhum herói contratado ainda.</p>';
+            html += '<p style="color:#aaa;">Nenhum herói contratado ainda.</p>';
         }
 
         container.innerHTML = html;
