@@ -21,6 +21,32 @@ function updateUI() {
     if (gpsElem) gpsElem.innerText = gps.toFixed(1);
     if (prestigeElem) prestigeElem.innerText = gameState.prestige;
     if (membersElem) membersElem.innerText = `${gameState.adventurers.length}/${gameState.maxMembers}`;
+
+    // Atualiza o estado habilitado/desabilitado dos botões em tempo real conforme o Ouro acumula
+    updateButtonsState();
+}
+
+// Função para atualizar dinamicamente o estado (escuro/aceso) dos botões sem regerar o HTML
+function updateButtonsState() {
+    const currentGold = Number(gameState.gold) || 0;
+
+    // Botões de recrutamento (Custo: 40 Ouro + Limite de Vagas)
+    const recruitCost = 40;
+    const canRecruit = currentGold >= recruitCost && gameState.adventurers.length < gameState.maxMembers;
+    document.querySelectorAll('.recruit-buttons .action-btn').forEach(btn => {
+        btn.disabled = !canRecruit;
+    });
+
+    // Botões de cura de heróis (Custo: 15 Ouro)
+    document.querySelectorAll('.heal-btn').forEach(btn => {
+        btn.disabled = currentGold < 15;
+    });
+
+    // Botões de construções
+    document.querySelectorAll('.building-btn').forEach(btn => {
+        const cost = Number(btn.getAttribute('data-cost')) || 0;
+        btn.disabled = currentGold < cost;
+    });
 }
 
 function switchTab(tabName) {
@@ -42,15 +68,18 @@ function renderAdventurers() {
     if (!container) return;
 
     const recruitCost = 40;
+    const canRecruit = gameState.gold >= recruitCost && gameState.adventurers.length < gameState.maxMembers;
+    const recruitDisabled = canRecruit ? '' : 'disabled';
+
     let html = `
         <div class="recruit-panel">
             <h3>Taverna de Recrutamento</h3>
             <p>Contrate novos aventureiros (Custo: 🪙 ${recruitCost} Ouro)</p>
             <div class="recruit-buttons">
-                <button class="action-btn" onclick="hireAdventurer('Guerreiro', ${recruitCost}, event)">🛡️ Guerreiro</button>
-                <button class="action-btn" onclick="hireAdventurer('Mago', ${recruitCost}, event)">🔮 Mago</button>
-                <button class="action-btn" onclick="hireAdventurer('Padre', ${recruitCost}, event)">✨ Padre</button>
-                <button class="action-btn" onclick="hireAdventurer('Arqueiro', ${recruitCost}, event)">🏹 Arqueiro</button>
+                <button class="action-btn" ${recruitDisabled} onclick="hireAdventurer('Guerreiro', ${recruitCost}, event)">🛡️ Guerreiro</button>
+                <button class="action-btn" ${recruitDisabled} onclick="hireAdventurer('Mago', ${recruitCost}, event)">🔮 Mago</button>
+                <button class="action-btn" ${recruitDisabled} onclick="hireAdventurer('Padre', ${recruitCost}, event)">✨ Padre</button>
+                <button class="action-btn" ${recruitDisabled} onclick="hireAdventurer('Arqueiro', ${recruitCost}, event)">🏹 Arqueiro</button>
             </div>
         </div>
         <hr>
@@ -65,7 +94,8 @@ function renderAdventurers() {
             statusBadge = '<span class="badge on-quest">Em Missão</span>';
         } else if (hero.status === 'injured') {
             statusBadge = `<span class="badge injured">Ferido (${Math.ceil(hero.injuryTimer)}s)</span>`;
-            healBtn = `<button class="action-btn" onclick="healHero('${hero.id}', 15, event)">🧪 Curar (🪙 15)</button>`;
+            const healDisabled = gameState.gold >= 15 ? '' : 'disabled';
+            healBtn = `<button class="action-btn heal-btn" ${healDisabled} onclick="healHero('${hero.id}', 15, event)">🧪 Curar (🪙 15)</button>`;
         }
 
         html += `
@@ -154,11 +184,13 @@ function renderBuildings() {
     let html = '';
     availableBuildings.forEach(b => {
         const cost = Math.floor(b.baseCost * Math.pow(b.costMultiplier, b.level));
+        const disabled = gameState.gold >= cost ? '' : 'disabled';
+
         html += `
             <div class="building-card">
                 <h4>${b.name} <small>(Nível ${b.level})</small></h4>
                 <p>${b.description}</p>
-                <button class="action-btn" onclick="upgradeBuilding('${b.id}', event)">
+                <button class="action-btn building-btn" data-cost="${cost}" ${disabled} onclick="upgradeBuilding('${b.id}', event)">
                     ${b.level === 0 ? 'Construir' : 'Evoluir'} (🪙 ${cost})
                 </button>
             </div>
