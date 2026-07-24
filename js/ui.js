@@ -1,11 +1,20 @@
 /* ==========================================================================
-   UI.JS - RENDERIZAÇÃO E INTERAÇÃO COM A TELA (PASSO 2)
+   UI.JS - RENDERIZAÇÃO E INTERAÇÃO COM A TELA (COM 5 ESCALAS DE CORES)
    ========================================================================== */
 
 function triggerErrorEffect(element) {
     if (!element) return;
     element.classList.add('btn-error-shake');
     setTimeout(() => element.classList.remove('btn-error-shake'), 400);
+}
+
+// Retorna a classe CSS com base na porcentagem da chance de sucesso
+function getChanceColorClass(chance) {
+    if (chance <= 25) return 'chance-red';
+    if (chance <= 50) return 'chance-orange';
+    if (chance <= 75) return 'chance-yellow';
+    if (chance <= 95) return 'chance-green';
+    return 'chance-blue';
 }
 
 function updateUI() {
@@ -144,13 +153,15 @@ function renderQuests() {
 
         const disabled = availableHeroes.length === 0 ? 'disabled' : '';
 
-        // Calcula previa de chance e tempo com base no primeiro herói selecionável
         let chancePreview = '--';
+        let chanceClass = '';
         let timePreview = quest.baseDuration;
 
         if (availableHeroes.length > 0) {
             const selectedHero = availableHeroes[0];
-            chancePreview = calculateSuccessChance(selectedHero, quest);
+            const numericChance = calculateSuccessChance(selectedHero, quest);
+            chancePreview = `${numericChance}%`;
+            chanceClass = getChanceColorClass(numericChance);
             timePreview = Math.ceil(calculateQuestDuration(selectedHero, quest));
         }
 
@@ -161,7 +172,7 @@ function renderQuests() {
                 <div class="rewards">
                     <span>🪙 +${quest.goldReward}</span>
                     <span>⭐ +${quest.xpReward} XP</span>
-                    <span style="color: #ffd700; font-weight: bold;">🎯 Chance: <span id="chance-${quest.id}">${chancePreview}%</span></span>
+                    <span>🎯 Chance: <span id="chance-${quest.id}" class="${chanceClass}">${chancePreview}</span></span>
                 </div>
                 <div class="quest-actions">
                     <select id="select-hero-${quest.id}" ${disabled} onchange="updateQuestPreview('${quest.id}')">${selectOptions}</select>
@@ -185,6 +196,8 @@ function updateQuestPreview(questId) {
     if (hero && quest) {
         const chance = calculateSuccessChance(hero, quest);
         chanceElem.innerText = `${chance}%`;
+        // Remove classes antigas e insere a nova cor
+        chanceElem.className = getChanceColorClass(chance);
     }
 }
 
@@ -204,12 +217,15 @@ function updateActiveQuestsUI() {
         return;
     }
 
-    container.innerHTML = '<h3>Missões em Andamento</h3>' + gameState.activeQuests.map(q => `
-        <div class="active-quest-item">
-            <span>⚔️ <strong>${q.heroName}</strong> em "${q.title}" <small style="color:#ffa502;">(${q.successChance}% Sorte)</small></span>
-            <span>⏳ ${Math.ceil(q.timeRemaining)}s restante</span>
-        </div>
-    `).join('');
+    container.innerHTML = '<h3>Missões em Andamento</h3>' + gameState.activeQuests.map(q => {
+        const chanceClass = getChanceColorClass(q.successChance);
+        return `
+            <div class="active-quest-item">
+                <span>⚔️ <strong>${q.heroName}</strong> em "${q.title}" <small class="${chanceClass}">(${q.successChance}% Chance)</small></span>
+                <span>⏳ ${Math.ceil(q.timeRemaining)}s restante</span>
+            </div>
+        `;
+    }).join('');
 }
 
 function renderBuildings() {
