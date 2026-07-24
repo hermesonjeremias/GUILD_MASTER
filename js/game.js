@@ -1,46 +1,48 @@
 /* ==========================================================================
-   GAME.JS - LOOP PRINCIPAL DE TEMPO REAL
+   GAME.JS - LOOP PRINCIPAL DO JOGO E SINCRO
    ========================================================================== */
+
+let lastTime = Date.now();
 
 function gameLoop() {
     const now = Date.now();
-    // Delta Time: tempo decorrido desde a última atualização em segundos
-    const dt = (now - state.lastUpdate) / 1000; 
-    state.lastUpdate = now;
+    const dt = (now - lastTime) / 1000; // Delta time em segundos
+    lastTime = now;
 
-    // 1. Ganho passivo de Ouro (GPS)
-    if (typeof Adventurers !== 'undefined' && typeof Adventurers.calculateTotalGPS === 'function') {
-        const gps = Adventurers.calculateTotalGPS();
-        state.gold += gps * dt;
+    // 1. Ganho de Ouro Passivo (GPS)
+    if (typeof Adventurers !== 'undefined' && Adventurers.calculateTotalGPS) {
+        const totalGPS = Adventurers.calculateTotalGPS();
+        state.gold += totalGPS * dt;
     }
 
-    // 2. Atualizar progresso das Missões ativas
-    if (typeof Quests !== 'undefined' && typeof Quests.updateActiveQuests === 'function') {
+    // 2. Progresso das Missões Ativas
+    if (typeof Quests !== 'undefined' && Quests.updateActiveQuests) {
         Quests.updateActiveQuests(dt);
     }
 
-    // 3. Atualizar a Interface do Usuário (Mostra os números na tela)
-    if (typeof UI !== 'undefined' && typeof UI.update === 'function') {
+    // 3. Atualiza os elementos de UI a cada ciclo
+    if (typeof UI !== 'undefined' && UI.update) {
         UI.update();
     }
 
-    // Chama o próximo frame
     requestAnimationFrame(gameLoop);
 }
 
-// Inicializa quando o HTML estiver totalmente carregado na tela
-document.addEventListener('DOMContentLoaded', () => {
-    // Carrega dados salvos do navegador se existirem
-    if (typeof loadGame === 'function') {
-        loadGame();
-    }
+// Inicialização ao carregar a página
+window.addEventListener('DOMContentLoaded', () => {
+    // Carrega o progresso salvo
+    StateManager.load();
 
-    // Renderiza a estrutura da UI
-    if (typeof UI !== 'undefined') {
+    // Renderiza e inicializa a interface
+    if (typeof UI !== 'undefined' && UI.init) {
         UI.init();
     }
 
-    // Inicia o Loop principal do jogo
-    state.lastUpdate = Date.now();
+    // Auto-Save a cada 10 segundos
+    setInterval(() => {
+        StateManager.save();
+    }, 10000);
+
+    // Inicia o loop do jogo
     requestAnimationFrame(gameLoop);
 });
