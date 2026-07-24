@@ -20,6 +20,7 @@
         <nav class="tabs">
             <button class="nav-btn active" onclick="switchTab('aventureiros')">Aventureiros</button>
             <button class="nav-btn" onclick="switchTab('missoes')">Missões</button>
+            <button class="nav-btn" onclick="switchTab('ferreiro')">Ferreiro ⚒️</button>
             <button class="nav-btn" onclick="switchTab('construcoes')">Construções</button>
         </nav>
 
@@ -31,14 +32,29 @@
                 <div id="quests-container"></div>
                 <div id="active-quests-container" style="margin-top: 20px;"></div>
             </div>
+            <div id="tab-ferreiro" class="tab-content">
+                <div id="blacksmith-container"></div>
+            </div>
             <div id="tab-construcoes" class="tab-content">
                 <div id="buildings-container"></div>
             </div>
         </main>
     </div>
 
+    <!-- Modal Pop-up de Equipamentos -->
+    <div id="equip-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Equipar Item</h3>
+                <button class="close-btn" onclick="Items.closeModal()">❌</button>
+            </div>
+            <div id="modal-items-list" class="cards-grid" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
     <!-- Dependências do Sistema -->
     <script src="js/state.js"></script>
+    <script src="js/items.js"></script>
     <script src="js/adventurers.js"></script>
     <script src="js/quests.js"></script>
     <script src="js/buildings.js"></script>
