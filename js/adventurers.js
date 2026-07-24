@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ADVENTURERS.JS - GERENCIAMENTO E RECRUTAMENTO DE AVENTUREIROS
+   ADVENTURERS.JS - HERÓIS E RECRUTAMENTO
    ========================================================================== */
 
 const Adventurers = {
@@ -16,6 +16,13 @@ const Adventurers = {
             if (adv.status === 'injured') return total;
             return total + (adv.gps || 0);
         }, 0);
+    },
+
+    // Retorna o poder total considerando o bônus do Campo de Treinamento
+    getEffectivePower(adv) {
+        const trainingLvl = state.buildings.training || 0;
+        const bonusMult = 1 + (trainingLvl * 0.10); // +10% de poder por nível do prédio
+        return Math.floor(adv.power * bonusMult);
     },
 
     hire(classId) {
@@ -42,6 +49,21 @@ const Adventurers = {
         }
     },
 
+    // Ação para curar herói ferido (Custo proporcional ao nível)
+    heal(heroId) {
+        const hero = state.adventurers.find(a => a.id === heroId);
+        if (!hero || hero.status !== 'injured') return;
+
+        const healCost = hero.level * 20;
+        if (state.gold >= healCost) {
+            state.gold -= healCost;
+            hero.status = 'available';
+            this.render();
+            if (typeof UI !== 'undefined') UI.update();
+            if (typeof Quests !== 'undefined') Quests.render();
+        }
+    },
+
     render() {
         const container = document.getElementById('adventurers-container');
         if (!container) return;
@@ -59,7 +81,7 @@ const Adventurers = {
                     <div class="card-icon">${cls.icon}</div>
                     <h3>${cls.name}</h3>
                     <p>Rendimento: +${cls.baseGps} Ouro/s</p>
-                    <p>Poder de Luta: ⚔️ ${cls.power}</p>
+                    <p>Poder Base: ⚔️ ${cls.power}</p>
                     <p>Contratados: <strong>${count}</strong></p>
                     <button class="action-btn" 
                             data-cost="${cost}"
@@ -76,11 +98,27 @@ const Adventurers = {
         if (state.adventurers && state.adventurers.length > 0) {
             html += '<ul class="member-list">';
             state.adventurers.forEach(adv => {
+                const effectivePower = this.getEffectivePower(adv);
                 let statusTxt = 'Disponível';
-                if (adv.status === 'on-quest') statusTxt = 'Em Missão';
-                if (adv.status === 'injured') statusTxt = 'Ferido 🩹';
+                let healAction = '';
 
-                html += `<li><strong>${adv.name}</strong> (Nível ${adv.level}) — Poder: ${adv.power} | GPS: +${adv.gps} | Status: <em>${statusTxt}</em></li>`;
+                if (adv.status === 'on-quest') statusTxt = 'Em Missão';
+                if (adv.status === 'injured') {
+                    const healCost = adv.level * 20;
+                    statusTxt = '<span style="color:#e74c3c">Ferido 🩹</span>';
+                    healAction = `<button class="action-btn heal-btn" onclick="Adventurers.heal(${adv.id})">Tratar (${healCost} 🪙)</button>`;
+                }
+
+                html += `
+                    <li>
+                        <div>
+                            <strong>${adv.name}</strong> (Nível ${adv.level}) — 
+                            Poder: ⚔️ ${effectivePower} | 
+                            GPS: +${adv.gps} | 
+                            Status: <em>${statusTxt}</em>
+                        </div>
+                        ${healAction}
+                    </li>`;
             });
             html += '</ul>';
         } else {
