@@ -1,11 +1,15 @@
 /* ==========================================================================
-   BUILDINGS.JS - CONSTRUÇÕES E MELHORIAS DA GUILDA
+   BUILDINGS.JS - CONSTRUÇÕES DA GUILDA
    ========================================================================== */
 
 const Buildings = {
     list: [
-        { id: 'tavern', name: 'Ampliar Taverna', baseCost: 100, mult: 1.5, desc: 'Aumenta a capacidade máxima da guilda em +2 membros.', icon: '🍺' },
-        { id: 'training', name: 'Campo de Treinamento', baseCost: 300, mult: 1.8, desc: 'Aumenta o Poder de Luta de todos os heróis em +10% por nível.', icon: '🎯' }
+        { id: 'tavern', name: 'Ampliar Taverna', baseCost: 100, mult: 1.5, desc: 'Aumenta limite máximo de membros da guilda em +2.', icon: '🍺' },
+        { id: 'training', name: 'Campo de Treinamento', baseCost: 200, mult: 1.6, desc: 'Aumenta o Poder de Luta de todos os heróis em +10% por nível.', icon: '🎯' },
+        { id: 'strategyTable', name: 'Salão de Estratégia', baseCost: 150, mult: 2.0, desc: 'Aumenta a capacidade de heróis em uma mesma Party (Max 4).', icon: '🗺️' },
+        { id: 'officers', name: 'Quartel de Oficiais', baseCost: 300, mult: 2.2, desc: 'Desbloqueia a opção de Automação de Missões.', icon: '📜' },
+        { id: 'tactics', name: 'Academia de Táticas', baseCost: 500, mult: 2.5, desc: 'Reduz a penalidade de tempo de missões automáticas em -25%.', icon: '📚' },
+        { id: 'rescue', name: 'Equipe de Resgate', baseCost: 800, mult: 3.0, desc: 'Cura e resgata automaticamente heróis em missões automáticas falhas.', icon: '🚑' }
     ],
 
     upgrade(buildingId) {
