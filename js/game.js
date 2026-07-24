@@ -1,53 +1,48 @@
 /* ==========================================================================
-   GAME.JS - INICIALIZAÇÃO E LOOP PRINCIPAL
+   GAME.JS - LOOP PRINCIPAL E INICIALIZAÇÃO
    ========================================================================== */
 
-let lastTimestamp = 0;
+// Função que roda a cada quadro do jogo (Loop)
+function gameLoop() {
+    const now = Date.now();
+    const dt = (now - state.lastUpdate) / 1000; // Tempo passado em segundos
+    state.lastUpdate = now;
 
-function gameLoop(timestamp) {
-    if (!lastTimestamp) lastTimestamp = timestamp;
-    
-    let deltaSeconds = (timestamp - lastTimestamp) / 1000;
-    if (deltaSeconds > 1.0) deltaSeconds = 1.0; // Previne saltos ao trocar de aba
-    
-    lastTimestamp = timestamp;
-
-    // 1. Atualiza Missões
-    if (typeof updateQuests === 'function') {
-        updateQuests(deltaSeconds);
+    // 1. Calcula o Ganho Passivo de Ouro (GPS - Ouro por segundo)
+    let totalGps = 0;
+    if (typeof Adventurers !== 'undefined') {
+        totalGps = Adventurers.calculateTotalGPS();
+        state.gold += totalGps * dt;
     }
 
-    // 2. Atualiza Heróis (Cura / XP)
-    if (typeof updateAdventurersTimers === 'function') {
-        updateAdventurersTimers(deltaSeconds);
+    // 2. Processa o progresso das Missões em andamento
+    if (typeof Quests !== 'undefined') {
+        Quests.updateActiveQuests(dt);
     }
 
-    // 3. Incremento Passivo de Ouro
-    if (typeof calculateGoldPerSecond === 'function') {
-        const gps = calculateGoldPerSecond();
-        if (gps > 0) {
-            gameState.gold += gps * deltaSeconds;
-        }
+    // 3. Atualiza os textos e botões na tela
+    if (typeof UI !== 'undefined' && typeof UI.update === 'function') {
+        UI.update();
     }
 
-    // 4. Atualizações de Interface
-    if (typeof updateUI === 'function') updateUI();
-    if (typeof updateActiveQuestsUI === 'function') updateActiveQuestsUI();
+    // Salva o jogo automaticamente a cada segundo
+    saveGame();
 
+    // Chama o próximo quadro do loop
     requestAnimationFrame(gameLoop);
 }
 
+// Quando a página termina de carregar no navegador:
 window.addEventListener('DOMContentLoaded', () => {
-    if (typeof loadGame === 'function') loadGame();
-    if (typeof recruitAldric === 'function') recruitAldric();
+    // 1. Carrega dados salvos (se existirem)
+    loadGame();
 
-    if (typeof updateUI === 'function') updateUI();
-    if (typeof renderAdventurers === 'function') renderAdventurers();
+    // 2. Renderiza a interface inicial completa
+    if (typeof UI !== 'undefined') {
+        UI.init();
+        UI.update();
+    }
 
-    // Autosave a cada 10 segundos
-    setInterval(() => {
-        if (typeof saveGame === 'function') saveGame();
-    }, 10000);
-
+    // 3. Inicia o loop contínuo do jogo
     requestAnimationFrame(gameLoop);
 });
