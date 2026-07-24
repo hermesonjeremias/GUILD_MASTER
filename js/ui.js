@@ -8,11 +8,12 @@ const UI = {
         this.update();
     },
 
-    renderAll() {
-        if (typeof Adventurers !== 'undefined' && Adventurers.render) Adventurers.render();
-        if (typeof Quests !== 'undefined' && Quests.render) Quests.render();
-        if (typeof Buildings !== 'undefined' && Buildings.render) Buildings.render();
-    },
+renderAll() {
+    if (typeof Adventurers !== 'undefined' && Adventurers.render) Adventurers.render();
+    if (typeof Quests !== 'undefined' && Quests.render) Quests.render();
+    if (typeof Buildings !== 'undefined' && Buildings.render) Buildings.render();
+    if (typeof Items !== 'undefined' && Items.renderBlacksmith) Items.renderBlacksmith();
+}
 
     update() {
         const goldElem = document.getElementById('gold-display');
