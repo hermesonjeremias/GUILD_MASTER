@@ -1,12 +1,11 @@
 /* ==========================================================================
-   BUILDINGS.JS - CONSTRUÇÕES E MELHORIAS DA GUILDA
+   BUILDINGS.JS - CONSTRUÇÕES DA GUILDA
    ========================================================================== */
 
 const Buildings = {
     list: [
-        { id: 'tavern', name: 'Ampliar Taverna', baseCost: 100, mult: 1.5, desc: 'Aumenta o limite máximo de membros na guilda (+2 por nível).', icon: '🍺' },
-        { id: 'training', name: 'Centro de Treinamento', baseCost: 300, mult: 1.8, desc: 'Melhora o poder base de novos aventureiros.', icon: '🎯' },
-        { id: 'infirmary', name: 'Enfermaria', baseCost: 500, mult: 2.0, desc: 'Acelera a recuperação de heróis feridos.', icon: '🏥' }
+        { id: 'tavern', name: 'Ampliar Taverna', baseCost: 100, mult: 1.5, desc: 'Aumenta a capacidade máxima da guilda em +2 membros.', icon: '🍺' },
+        { id: 'training', name: 'Campo de Treinamento', baseCost: 300, mult: 1.8, desc: 'Melhora as instalações da guilda.', icon: '🎯' }
     ],
 
     upgrade(buildingId) {
@@ -25,7 +24,6 @@ const Buildings = {
             }
 
             this.render();
-            if (typeof Adventurers !== 'undefined') Adventurers.render();
             if (typeof UI !== 'undefined') UI.update();
         }
     },
@@ -34,7 +32,7 @@ const Buildings = {
         const container = document.getElementById('buildings-container');
         if (!container) return;
 
-        let html = '<h3>🏛️ Edifícios e Infraestrutura</h3>';
+        let html = '<h2>🏰 Edifícios da Guilda</h2><div class="cards-grid">';
 
         this.list.forEach(b => {
             const lvl = state.buildings[b.id] || 0;
@@ -42,16 +40,21 @@ const Buildings = {
             const canAfford = state.gold >= cost;
 
             html += `
-                <div class="building-card">
-                    <h4>${b.icon} ${b.name} (Nível ${lvl})</h4>
-                    <p style="margin: 8px 0; color: #bbb;">${b.desc}</p>
-                    <button class="action-btn" data-cost="${cost}" onclick="Buildings.upgrade('${b.id}')" ${!canAfford ? 'disabled' : ''}>
-                        Melhorar (${cost} 🪙)
+                <div class="card">
+                    <div class="card-icon">${b.icon}</div>
+                    <h3>${b.name} (Nível ${lvl})</h3>
+                    <p>${b.desc}</p>
+                    <button class="action-btn" 
+                            data-cost="${cost}"
+                            onclick="Buildings.upgrade('${b.id}')" 
+                            ${!canAfford ? 'disabled' : ''}>
+                        Evoluir (${cost} Ouro)
                     </button>
                 </div>
             `;
         });
 
+        html += '</div>';
         container.innerHTML = html;
     }
 };
