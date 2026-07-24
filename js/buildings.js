@@ -1,68 +1,60 @@
 /* ==========================================================================
-   BUILDINGS.JS - CONSTRUÇÕES E MELHORIAS DA GUILDA
+   BUILDINGS.JS - MELHORIAS DA GUILDA
    ========================================================================== */
 
-const availableBuildings = [
-    {
-        id: "dormitory",
-        name: "Dormitório",
-        description: "Aumenta o limite máximo de aventureiros da guilda (+2 vagas por nível).",
-        level: 1,
-        baseCost: 50,
-        costMultiplier: 1.8,
-        membersPerLevel: 2
+const Buildings = {
+    list: [
+        { id: 'tavern', name: 'Taverna Ampliada', baseCost: 100, desc: 'Aumenta a capacidade máxima da guilda em +2 membros.', icon: '🍺' },
+        { id: 'training', name: 'Campo de Treino', baseCost: 300, desc: 'Aumenta a eficiência de ganho de ouro dos heróis.', icon: '🎯' }
+    ],
+
+    upgrade(buildingId) {
+        const b = this.list.find(x => x.id === buildingId);
+        if (!b) return;
+
+        const currentLvl = state.buildings[buildingId] || 0;
+        const cost = Math.floor(b.baseCost * Math.pow(1.5, currentLvl));
+
+        if (state.gold >= cost) {
+            state.gold -= cost;
+            state.buildings[buildingId] = currentLvl + 1;
+
+            if (buildingId === 'tavern') {
+                state.maxMembers += 2;
+            }
+
+            this.render();
+            if (typeof UI !== 'undefined') UI.update();
+        }
     },
-    {
-        id: "contract_board",
-        name: "Mural de Contratos",
-        description: "Gera Ouro passivo por segundo baseado no poder dos seus aventureiros.",
-        level: 0,
-        baseCost: 100,
-        costMultiplier: 2.0
-    },
-    {
-        id: "infirmary",
-        name: "Enfermaria",
-        description: "Acelera a recuperação natural de heróis feridos em +25% por nível.",
-        level: 0,
-        baseCost: 150,
-        costMultiplier: 2.2
-    },
-    {
-        id: "training_hall",
-        name: "Centro de Treinamento",
-        description: "Concede XP passivo para heróis disponíveis que estão na guilda.",
-        level: 0,
-        baseCost: 200,
-        costMultiplier: 2.5
+
+    render() {
+        const container = document.getElementById('buildings-list') || document.getElementById('tab-buildings');
+        if (!container) return;
+
+        let html = '<h2>🏰 Edifícios da Guilda</h2><div class="cards-grid">';
+
+        this.list.forEach(b => {
+            const lvl = state.buildings[b.id] || 0;
+            const cost = Math.floor(b.baseCost * Math.pow(1.5, lvl));
+            const canAfford = state.gold >= cost;
+
+            html += `
+                <div class="card">
+                    <div class="card-icon">${b.icon}</div>
+                    <h3>${b.name} (Nível ${lvl})</h3>
+                    <p>${b.desc}</p>
+                    <button class="action-btn" 
+                            data-cost="${cost}"
+                            onclick="Buildings.upgrade('${b.id}')" 
+                            ${!canAfford ? 'disabled' : ''}>
+                        Evoluir (${cost} Ouro)
+                    </button>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
     }
-];
-
-function upgradeBuilding(buildingId, event) {
-    const building = availableBuildings.find(b => b.id === buildingId);
-    if (!building) return;
-
-    const currentCost = Math.floor(building.baseCost * Math.pow(building.costMultiplier, building.level));
-
-    if (gameState.gold < currentCost) {
-        if (event && event.currentTarget) triggerErrorEffect(event.currentTarget);
-        return;
-    }
-
-    gameState.gold -= currentCost;
-    building.level += 1;
-
-    if (building.id === "dormitory") {
-        gameState.maxMembers = 4 + (building.level * building.membersPerLevel);
-    }
-
-    if (typeof saveGame === 'function') saveGame();
-    if (typeof updateUI === 'function') updateUI();
-    if (typeof renderBuildings === 'function') renderBuildings();
-}
-
-function getBuildingLevel(buildingId) {
-    if (typeof availableBuildings === 'undefined' || !Array.isArray(availableBuildings)) return 0;
-    const building = availableBuildings.find(b => b.id === buildingId);
-    return building ? Number(building.level) || 0 : 0;
-}
+};
