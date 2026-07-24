@@ -1,5 +1,5 @@
 /* ==========================================================================
-   QUESTS.JS - MISSÕES, AUTOMAÇÃO E RESGATE AUTOMÁTICO
+   QUESTS.JS - MISSÕES, PREVIEW DE BÔNUS/RISCO, AUTOMAÇÃO E RESGATE
    ========================================================================== */
 
 const Quests = {
@@ -13,7 +13,18 @@ const Quests = {
 
     calculatePartyStats(heroIds, quest, isAuto = false) {
         const heroes = (state.adventurers || []).filter(a => heroIds.includes(a.id));
-        if (heroes.length === 0) return null;
+        if (heroes.length === 0) {
+            return {
+                heroes: [],
+                totalPower: 0,
+                finalDuration: quest.duration,
+                finalGold: quest.rewardGold,
+                chance: quest.safe ? 100 : 0,
+                archerCount: 0,
+                mageCount: 0,
+                clericCount: 0
+            };
+        }
 
         let totalPower = 0;
         let archerCount = 0;
@@ -31,7 +42,7 @@ const Quests = {
         const timeReduc = Math.min(0.50, archerCount * 0.10);
         let durationMultiplier = (1 - timeReduc);
 
-        // Penalidade de Automação: +100% de tempo, reduzido pelo nível da Academia de Táticas (-25% por nível)
+        // Penalidade de Automação
         if (isAuto) {
             const tacticsLvl = (state.buildings && state.buildings.tactics) || 0;
             const autoPenalty = Math.max(0, 1.0 - (tacticsLvl * 0.25));
@@ -44,20 +55,70 @@ const Quests = {
         const goldBonus = 1 + (mageCount * 0.15);
         const finalGold = Math.round(quest.rewardGold * goldBonus);
 
-        // Passiva Clérigo: +10% de chance por Clérigo
+        // Passiva Clérigo: +10% de chance de sucesso por Clérigo
         let chance = 100;
-        if (quest.reqPower > 0) {
+        if (!quest.safe && quest.reqPower > 0) {
             const ratio = totalPower / quest.reqPower;
             chance = Math.floor(ratio * 75) + (clericCount * 10);
             chance = Math.min(100, Math.max(5, chance));
         }
 
-        return { heroes, totalPower, finalDuration, finalGold, chance };
+        return { 
+            heroes, 
+            totalPower, 
+            finalDuration, 
+            finalGold, 
+            chance,
+            archerCount,
+            mageCount,
+            clericCount
+        };
     },
 
     getSelectedHeroIds(questId) {
         const checkboxes = document.querySelectorAll(`.party-check-${questId}:checked`);
         return Array.from(checkboxes).map(cb => Number(cb.value));
+    },
+
+    // Função chamada toda vez que o jogador marca/desmarca um herói
+    updatePreview(questId) {
+        const quest = this.available.find(q => q.id === questId);
+        if (!quest) return;
+
+        const selectedIds = this.getSelectedHeroIds(questId);
+        const isAutoActive = !!state.autoQuestsConfig[questId];
+        const stats = this.calculatePartyStats(selectedIds, quest, isAutoActive);
+
+        const previewElem = document.getElementById(`preview-${questId}`);
+        if (!previewElem) return;
+
+        if (selectedIds.length === 0) {
+            previewElem.innerHTML = `<span style="color:#aaa;">Selecione heróis para ver a estimativa.</span>`;
+            return;
+        }
+
+        const riskPct = quest.safe ? 0 : (100 - stats.chance);
+        let riskBadge = `<span style="color:#2ecc71; font-weight:bold;">🟢 Sucesso: ${stats.chance}% (Risco: ${riskPct}%)</span>`;
+        if (riskPct > 35) {
+            riskBadge = `<span style="color:#e74c3c; font-weight:bold;">🔴 Alto Risco! (Falha: ${riskPct}%)</span>`;
+        } else if (riskPct > 10) {
+            riskBadge = `<span style="color:#f1c40f; font-weight:bold;">🟡 Médio Risco (Falha: ${riskPct}%)</span>`;
+        }
+
+        let bonusesText = [];
+        if (stats.archerCount > 0) bonusesText.push(`🏹 -${stats.archerCount * 10}% Tempo`);
+        if (stats.mageCount > 0) bonusesText.push(`🔮 +${stats.mageCount * 15}% Ouro`);
+        if (stats.clericCount > 0 && !quest.safe) bonusesText.push(`✨ +${stats.clericCount * 10}% Proteção`);
+
+        const bonusStr = bonusesText.length > 0 ? `<br><small style="color:#f39c12;">Bônus Ativos: ${bonusesText.join(' | ')}</small>` : '';
+
+        previewElem.innerHTML = `
+            <div><strong>Poder do Grupo:</strong> ⚔️ ${stats.totalPower} / Req: ${quest.reqPower}</div>
+            <div><strong>Tempo Estimado:</strong> ⏱️ ${stats.finalDuration}s</div>
+            <div><strong>Ouro Estimado:</strong> 💰 ${stats.finalGold}</div>
+            <div>${riskBadge}</div>
+            ${bonusStr}
+        `;
     },
 
     toggleAuto(questId) {
@@ -85,16 +146,14 @@ const Quests = {
             return;
         }
 
-        // Salva seleção para o ciclo de automação
         if (!isAutoTrigger) {
             state.autoQuestsConfig[`${questId}_ids`] = selectedIds;
         }
 
         const isAutoActive = !!state.autoQuestsConfig[questId];
         const partyStats = this.calculatePartyStats(selectedIds, quest, isAutoActive);
-        if (!partyStats) return;
+        if (!partyStats || partyStats.heroes.length === 0) return;
 
-        // Verificar disponibilidade dos heróis
         const unavailable = partyStats.heroes.some(h => quest.safe ? h.status === 'on-quest' : h.status !== 'available');
         if (unavailable) return;
 
@@ -137,11 +196,9 @@ const Quests = {
                         Adventurers.addXP(hero, q.rewardXp);
                     });
                 } else {
-                    // Tratar Falha
                     const rescueLvl = (state.buildings && state.buildings.rescue) || 0;
                     let rescued = false;
 
-                    // Tentar Resgate Automático se ativado e construído
                     if (q.isAuto && rescueLvl > 0) {
                         const costMult = Math.max(1.5, 3.0 - (rescueLvl * 0.5));
                         const totalHealCost = partyHeroes.reduce((sum, h) => sum + Math.floor(h.level * 15 * costMult), 0);
@@ -155,7 +212,6 @@ const Quests = {
 
                     if (!rescued) {
                         partyHeroes.forEach(hero => hero.status = 'injured');
-                        // Se falhou e não resgatou, desativa automação temporariamente
                         state.autoQuestsConfig[q.id] = false;
                     }
                 }
@@ -168,7 +224,6 @@ const Quests = {
                 if (typeof Adventurers !== 'undefined') Adventurers.render();
                 this.render();
 
-                // Restart automático se a automação continuar ativa
                 if (wasAuto && state.autoQuestsConfig[questId]) {
                     setTimeout(() => this.startQuest(questId, true), 500);
                 }
@@ -197,7 +252,7 @@ const Quests = {
                     const isInjured = h.status === 'injured' ? ' (Ferido)' : '';
                     return `
                         <label class="party-item">
-                            <input type="checkbox" class="party-check-${quest.id}" value="${h.id}">
+                            <input type="checkbox" class="party-check-${quest.id}" value="${h.id}" onchange="Quests.updatePreview('${quest.id}')">
                             <span>${h.name}${isInjured} - ⚔️${power}</span>
                         </label>
                     `;
@@ -213,12 +268,17 @@ const Quests = {
                 <div class="card">
                     <div class="card-icon">${quest.icon}</div>
                     <h3>${quest.title}</h3>
-                    <p>Duração: ${quest.duration}s | Recompensa: 💰 ${quest.rewardGold} | XP: ⭐ ${quest.rewardXp}</p>
+                    <p>Duração Base: ${quest.duration}s | Rec: 💰 ${quest.rewardGold} | XP: ⭐ ${quest.rewardXp}</p>
                     <p>Poder Requerido: ⚔️ ${quest.reqPower}</p>
-                    
+
                     <div class="party-selector">
                         <strong style="font-size: 0.8rem; display: block; margin-bottom: 4px;">Seleção de Party (Max ${maxParty}):</strong>
                         ${partyHtml}
+                    </div>
+
+                    <!-- Painel de Preview Dinâmico -->
+                    <div id="preview-${quest.id}" style="background: #111; padding: 8px; border-radius: 4px; margin: 8px 0; font-size: 0.85rem; text-align: left;">
+                        <span style="color:#aaa;">Selecione heróis para ver a estimativa.</span>
                     </div>
 
                     <button class="action-btn" onclick="Quests.startQuest('${quest.id}')" ${candidateHeroes.length === 0 ? 'disabled' : ''}>
