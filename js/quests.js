@@ -1,53 +1,63 @@
 /* ==========================================================================
-   QUESTS.JS - GERENCIAMENTO DE CONTRATOS E MISSÕES
+   QUESTS.JS - LÓGICA DE MISSÕES COM TAXA DE SUCESSO E RISCO
    ========================================================================== */
 
 const availableQuestsList = [
     {
-        id: "rat_problem",
+        id: "rat_infestation",
         title: "Infestação na Taverna",
-        description: "Limpe os ratos gigantes no porão da taverna local.",
-        duration: 8,
+        description: "Livre o porão dos ratos gigantes. Missão simples para novatos.",
+        baseDuration: 8,
+        requiredPower: 10,
         goldReward: 25,
-        xpReward: 15,
-        prestigeReward: 1,
-        injuryChance: 0.1
+        xpReward: 15
     },
     {
         id: "goblin_patrol",
         title: "Patrulha de Goblins",
-        description: "Elimine o acampamento goblin que ameaça as caravanas da estrada.",
-        duration: 15,
-        goldReward: 50,
-        xpReward: 35,
-        prestigeReward: 3,
-        injuryChance: 0.2
+        description: "Goblins foram vistos perto da vila. Requer um pouco mais de força.",
+        baseDuration: 15,
+        requiredPower: 22,
+        goldReward: 60,
+        xpReward: 35
     },
     {
-        id: "escort_merchant",
-        title: "Escolta de Mercadores",
-        description: "Proteja os mercadores que atravessam o desfiladeiro perigoso.",
-        duration: 25,
-        goldReward: 100,
-        xpReward: 70,
-        prestigeReward: 5,
-        injuryChance: 0.25
+        id: "bandit_camp",
+        title: "Acampamento de Salteadores",
+        description: "Limpe a estrada comercial atacada por bandidos armados.",
+        baseDuration: 25,
+        requiredPower: 38,
+        goldReward: 120,
+        xpReward: 70
     },
     {
-        id: "ruins_exploration",
-        title: "Exploração de Ruínas Antigas",
-        description: "Adentre as ruínas sombrias em busca de relíquias e tesouros.",
-        duration: 40,
-        goldReward: 220,
-        xpReward: 150,
-        prestigeReward: 10,
-        injuryChance: 0.35
+        id: "dungeon_boss",
+        title: "Templo Esquecido",
+        description: "Uma ameaça ancestral desperta. Alto risco de ferimentos!",
+        baseDuration: 40,
+        requiredPower: 60,
+        goldReward: 280,
+        xpReward: 160
     }
 ];
 
-function startQuest(questId, heroId) {
-    if (!gameState || !Array.isArray(gameState.adventurers)) return;
+// Calcula a chance de sucesso (entre 10% e 100%)
+function calculateSuccessChance(hero, quest) {
+    if (!hero || !quest) return 0;
+    const powerRatio = hero.stats.power / quest.requiredPower;
+    let chance = Math.floor(powerRatio * 75); // Se tiver o poder exato = 75%
+    return Math.max(10, Math.min(100, chance)); // Limita entre 10% e 100%
+}
 
+// Calcula a duração reduzida com base na Velocidade do Herói
+function calculateQuestDuration(hero, quest) {
+    if (!hero || !quest) return quest.baseDuration;
+    const speedBonus = hero.stats.speed * 0.02; // Cada ponto reduz 2% do tempo
+    const duration = quest.baseDuration / (1 + speedBonus);
+    return Math.max(3, duration); // Tempo mínimo de 3 segundos
+}
+
+function startQuest(questId, heroId) {
     const quest = availableQuestsList.find(q => q.id === questId);
     const hero = gameState.adventurers.find(h => h.id === heroId);
 
@@ -55,68 +65,73 @@ function startQuest(questId, heroId) {
 
     hero.status = "on_quest";
 
-    if (!Array.isArray(gameState.activeQuests)) {
-        gameState.activeQuests = [];
-    }
+    const duration = calculateQuestDuration(hero, quest);
+    const successChance = calculateSuccessChance(hero, quest);
 
     gameState.activeQuests.push({
-        id: `active_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-        questId: quest.id,
+        id: quest.id,
         heroId: hero.id,
         heroName: hero.name,
         title: quest.title,
-        duration: Number(quest.duration),
-        timeRemaining: Number(quest.duration)
+        duration: duration,
+        timeRemaining: duration,
+        goldReward: quest.goldReward,
+        xpReward: quest.xpReward,
+        successChance: successChance,
+        requiredPower: quest.requiredPower
     });
 
     if (typeof saveGame === 'function') saveGame();
     if (typeof updateUI === 'function') updateUI();
     if (typeof renderQuests === 'function') renderQuests();
     if (typeof renderAdventurers === 'function') renderAdventurers();
-    if (typeof updateActiveQuestsUI === 'function') updateActiveQuestsUI();
 }
 
 function updateQuests(deltaSeconds) {
-    if (!gameState || !Array.isArray(gameState.activeQuests) || gameState.activeQuests.length === 0) return;
+    if (!Array.isArray(gameState.activeQuests) || gameState.activeQuests.length === 0) return;
+
+    let updated = false;
 
     for (let i = gameState.activeQuests.length - 1; i >= 0; i--) {
-        const activeQuest = gameState.activeQuests[i];
-        if (!activeQuest) continue;
+        const active = gameState.activeQuests[i];
+        active.timeRemaining -= deltaSeconds;
 
-        activeQuest.timeRemaining -= deltaSeconds;
-
-        if (activeQuest.timeRemaining <= 0) {
-            completeQuest(activeQuest);
+        if (active.timeRemaining <= 0) {
+            completeQuest(active);
             gameState.activeQuests.splice(i, 1);
-            
-            if (typeof saveGame === 'function') saveGame();
-            if (typeof updateUI === 'function') updateUI();
-            if (typeof renderQuests === 'function') renderQuests();
-            if (typeof renderAdventurers === 'function') renderAdventurers();
-            if (typeof updateActiveQuestsUI === 'function') updateActiveQuestsUI();
+            updated = true;
         }
+    }
+
+    if (updated) {
+        if (typeof saveGame === 'function') saveGame();
+        if (typeof updateUI === 'function') updateUI();
+        if (typeof renderQuests === 'function') renderQuests();
+        if (typeof renderAdventurers === 'function') renderAdventurers();
     }
 }
 
 function completeQuest(activeQuest) {
-    const questInfo = availableQuestsList.find(q => q.id === activeQuest.questId);
     const hero = gameState.adventurers.find(h => h.id === activeQuest.heroId);
+    if (!hero) return;
 
-    if (questInfo) {
-        gameState.gold = (Number(gameState.gold) || 0) + questInfo.goldReward;
-        gameState.prestige = (Number(gameState.prestige) || 0) + questInfo.prestigeReward;
+    // Rola a sorte para sucesso ou falha
+    const roll = Math.random() * 100;
+    const isSuccess = roll <= activeQuest.successChance;
 
-        if (hero && typeof hero.gainXp === 'function') {
-            hero.gainXp(questInfo.xpReward);
+    if (isSuccess) {
+        gameState.gold += activeQuest.goldReward;
+        if (typeof hero.gainXp === 'function') {
+            hero.gainXp(activeQuest.xpReward);
         }
-    }
+        hero.status = "available";
+    } else {
+        // FALHA: Herói fica ferido. A defesa reduz o tempo do ferimento!
+        const baseInjury = 15; // 15 segundos base de ferimento
+        const defReduction = hero.stats.defense * 0.3; 
+        const injuryTime = Math.max(5, Math.ceil(baseInjury - defReduction));
 
-    if (hero) {
-        if (questInfo && Math.random() < questInfo.injuryChance) {
-            hero.status = "injured";
-            hero.injuryTimer = 30;
-        } else {
-            hero.status = "available";
-        }
+        hero.status = "injured";
+        hero.injuryTimer = injuryTime;
     }
 }
