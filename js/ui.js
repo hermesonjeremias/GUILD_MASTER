@@ -1,5 +1,5 @@
 /* ==========================================================================
-   UI.JS - RENDERIZAÇÃO E INTERAÇÃO COM A TELA
+   UI.JS - RENDERIZAÇÃO E INTERAÇÃO COM A TELA (PASSO 2)
    ========================================================================== */
 
 function triggerErrorEffect(element) {
@@ -22,33 +22,27 @@ function updateUI() {
     if (prestigeElem) prestigeElem.innerText = gameState.prestige;
     if (membersElem) membersElem.innerText = `${gameState.adventurers.length}/${gameState.maxMembers}`;
 
-    // Atualiza o estado dos botões em tempo real (escuro/aceso)
     updateButtonsState();
 
-    // ATUALIZAÇÃO EM TEMPO REAL: Se a aba de Aventureiros estiver visível, atualiza a lista e o XP dinamicamente
     const activeTab = document.getElementById('tab-aventureiros');
     if (activeTab && activeTab.classList.contains('active')) {
         renderAdventurers();
     }
 }
 
-// Atualiza dinamicamente o estado dos botões sem regerar o HTML inteiro
 function updateButtonsState() {
     const currentGold = Number(gameState.gold) || 0;
 
-    // Botões de recrutamento (Custo: 40 Ouro)
     const recruitCost = 40;
     const canRecruit = currentGold >= recruitCost && gameState.adventurers.length < gameState.maxMembers;
     document.querySelectorAll('.recruit-buttons .action-btn').forEach(btn => {
         btn.disabled = !canRecruit;
     });
 
-    // Botões de cura de heróis (Custo: 15 Ouro)
     document.querySelectorAll('.heal-btn').forEach(btn => {
         btn.disabled = currentGold < 15;
     });
 
-    // Botões de construções
     document.querySelectorAll('.building-btn').forEach(btn => {
         const cost = Number(btn.getAttribute('data-cost')) || 0;
         btn.disabled = currentGold < cost;
@@ -105,7 +99,6 @@ function renderAdventurers() {
             healBtn = `<button class="action-btn heal-btn" ${healDisabled} onclick="healHero('${hero.id}', 15, event)">🧪 Curar (🪙 15)</button>`;
         }
 
-        // Calcula e exibe o ganho de XP/s em tempo real
         const xpPerSecond = (trainingLevel > 0 && hero.status === 'available') ? trainingLevel : 0;
         const xpRateDisplay = xpPerSecond > 0 
             ? ` <small style="color: #2ed573; font-weight: bold;">(+${xpPerSecond.toFixed(1)} XP/s)</small>` 
@@ -118,8 +111,9 @@ function renderAdventurers() {
                     ${statusBadge}
                 </div>
                 <div class="hero-stats">
-                    <span>⚔️ Poder: ${hero.stats.power}</span>
-                    <span>🛡️ Defesa: ${hero.stats.defense}</span>
+                    <span>⚔️ PWR: ${hero.stats.power}</span>
+                    <span>🛡️ DEF: ${hero.stats.defense}</span>
+                    <span>⚡ SPD: ${hero.stats.speed}</span>
                 </div>
                 <div class="xp-container">
                     <small>XP: <strong>${Math.floor(hero.xp)}</strong> / ${hero.maxXp}</small>${xpRateDisplay}
@@ -131,7 +125,6 @@ function renderAdventurers() {
 
     html += '</div>';
 
-    // Evita redesenhar o DOM se o HTML for idêntico para evitar piscadas na tela
     if (container.innerHTML !== html) {
         container.innerHTML = html;
     }
@@ -151,16 +144,27 @@ function renderQuests() {
 
         const disabled = availableHeroes.length === 0 ? 'disabled' : '';
 
+        // Calcula previa de chance e tempo com base no primeiro herói selecionável
+        let chancePreview = '--';
+        let timePreview = quest.baseDuration;
+
+        if (availableHeroes.length > 0) {
+            const selectedHero = availableHeroes[0];
+            chancePreview = calculateSuccessChance(selectedHero, quest);
+            timePreview = Math.ceil(calculateQuestDuration(selectedHero, quest));
+        }
+
         html += `
             <div class="quest-card">
-                <h4>${quest.title} <small>⏳ ${quest.duration}s</small></h4>
+                <h4>${quest.title} <small>⏳ ~${timePreview}s | PWR Req: ${quest.requiredPower}</small></h4>
                 <p>${quest.description}</p>
                 <div class="rewards">
                     <span>🪙 +${quest.goldReward}</span>
                     <span>⭐ +${quest.xpReward} XP</span>
+                    <span style="color: #ffd700; font-weight: bold;">🎯 Chance: <span id="chance-${quest.id}">${chancePreview}%</span></span>
                 </div>
                 <div class="quest-actions">
-                    <select id="select-hero-${quest.id}" ${disabled}>${selectOptions}</select>
+                    <select id="select-hero-${quest.id}" ${disabled} onchange="updateQuestPreview('${quest.id}')">${selectOptions}</select>
                     <button class="action-btn" ${disabled} onclick="handleStartQuestClick('${quest.id}')">Enviar</button>
                 </div>
             </div>
@@ -168,6 +172,20 @@ function renderQuests() {
     });
 
     container.innerHTML = html;
+}
+
+function updateQuestPreview(questId) {
+    const select = document.getElementById(`select-hero-${questId}`);
+    const chanceElem = document.getElementById(`chance-${questId}`);
+    if (!select || !chanceElem) return;
+
+    const hero = gameState.adventurers.find(h => h.id === select.value);
+    const quest = availableQuestsList.find(q => q.id === questId);
+
+    if (hero && quest) {
+        const chance = calculateSuccessChance(hero, quest);
+        chanceElem.innerText = `${chance}%`;
+    }
 }
 
 function handleStartQuestClick(questId) {
@@ -188,7 +206,7 @@ function updateActiveQuestsUI() {
 
     container.innerHTML = '<h3>Missões em Andamento</h3>' + gameState.activeQuests.map(q => `
         <div class="active-quest-item">
-            <span>⚔️ <strong>${q.heroName}</strong> em "${q.title}"</span>
+            <span>⚔️ <strong>${q.heroName}</strong> em "${q.title}" <small style="color:#ffa502;">(${q.successChance}% Sorte)</small></span>
             <span>⏳ ${Math.ceil(q.timeRemaining)}s restante</span>
         </div>
     `).join('');
