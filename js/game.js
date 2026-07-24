@@ -1,5 +1,5 @@
 /* ==========================================================================
-   GAME.JS - LOOP E SINCRONIZAÇÃO
+   GAME.JS - LOOP PRINCIPAL
    ========================================================================== */
 
 let lastTime = Date.now();
@@ -8,11 +8,6 @@ function gameLoop() {
     const now = Date.now();
     const dt = (now - lastTime) / 1000;
     lastTime = now;
-
-    if (typeof Adventurers !== 'undefined' && Adventurers.calculateTotalGPS) {
-        const totalGPS = Adventurers.calculateTotalGPS();
-        state.gold += totalGPS * dt;
-    }
 
     if (typeof Quests !== 'undefined' && Quests.updateActiveQuests) {
         Quests.updateActiveQuests(dt);
