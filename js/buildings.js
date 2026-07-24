@@ -1,11 +1,11 @@
 /* ==========================================================================
-   BUILDINGS.JS - MELHORIAS DA GUILDA
+   BUILDINGS.JS - CONSTRUÇÕES DA GUILDA
    ========================================================================== */
 
 const Buildings = {
     list: [
-        { id: 'tavern', name: 'Taverna Ampliada', baseCost: 100, desc: 'Aumenta a capacidade máxima da guilda em +2 membros.', icon: '🍺' },
-        { id: 'training', name: 'Campo de Treino', baseCost: 300, desc: 'Aumenta a eficiência de ganho de ouro dos heróis.', icon: '🎯' }
+        { id: 'tavern', name: 'Ampliar Taverna', baseCost: 100, desc: 'Aumenta a capacidade de membros da guilda em +2.', icon: '🍺' },
+        { id: 'training', name: 'Campo de Treinamento', baseCost: 300, desc: 'Melhora os equipamentos de treino do quartel.', icon: '🎯' }
     ],
 
     upgrade(buildingId) {
@@ -29,10 +29,11 @@ const Buildings = {
     },
 
     render() {
-        const container = document.getElementById('buildings-list') || document.getElementById('tab-buildings');
+        // ID exato do index.html: buildings-container
+        const container = document.getElementById('buildings-container');
         if (!container) return;
 
-        let html = '<h2>🏰 Edifícios da Guilda</h2><div class="cards-grid">';
+        let html = '<h3>🏛️ Edifícios da Guilda</h3>';
 
         this.list.forEach(b => {
             const lvl = state.buildings[b.id] || 0;
@@ -40,10 +41,9 @@ const Buildings = {
             const canAfford = state.gold >= cost;
 
             html += `
-                <div class="card">
-                    <div class="card-icon">${b.icon}</div>
-                    <h3>${b.name} (Nível ${lvl})</h3>
-                    <p>${b.desc}</p>
+                <div class="building-card">
+                    <h4>${b.icon} ${b.name} (Nível ${lvl})</h4>
+                    <p style="margin: 8px 0; color: #ccc;">${b.desc}</p>
                     <button class="action-btn" 
                             data-cost="${cost}"
                             onclick="Buildings.upgrade('${b.id}')" 
@@ -54,7 +54,6 @@ const Buildings = {
             `;
         });
 
-        html += '</div>';
         container.innerHTML = html;
     }
 };
