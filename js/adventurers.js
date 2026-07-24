@@ -1,38 +1,43 @@
 /* ==========================================================================
-   ADVENTURERS.JS - RECRUTAMENTO E GERENCIAMENTO DE HERÓIS
+   ADVENTURERS.JS - GERENCIAMENTO E RECRUTAMENTO DE AVENTUREIROS
    ========================================================================== */
 
 const Adventurers = {
-    // Tipos de Heróis para contratação
-    types: [
-        { id: 'novice', name: 'Novato', baseCost: 50, baseGps: 1, costMult: 1.15, icon: '🗡️' },
-        { id: 'archer', name: 'Arqueiro', baseCost: 200, baseGps: 5, costMult: 1.15, icon: '🏹' },
-        { id: 'mage', name: 'Mago', baseCost: 800, baseGps: 22, costMult: 1.15, icon: '🔮' },
-        { id: 'knight', name: 'Cavaleiro', baseCost: 3500, baseGps: 90, costMult: 1.15, icon: '🛡️' }
+    // Classes de heróis
+    classes: [
+        { id: 'guerreiro', name: 'Guerreiro', baseCost: 50, baseGps: 1, power: 10, icon: '⚔️' },
+        { id: 'arqueiro', name: 'Arqueiro', baseCost: 200, baseGps: 5, power: 25, icon: '🏹' },
+        { id: 'mago', name: 'Mago', baseCost: 800, baseGps: 22, power: 70, icon: '🔮' },
+        { id: 'clerigo', name: 'Clérigo', baseCost: 3500, baseGps: 90, power: 200, icon: '✨' }
     ],
 
-    // Calcula a soma do ganho de ouro por segundo de todos os heróis
+    // Calcula o rendimento passivo total
     calculateTotalGPS() {
         if (!state.adventurers) return 0;
-        return state.adventurers.reduce((total, adv) => total + (adv.gps || 0), 0);
+        return state.adventurers.reduce((total, adv) => {
+            if (adv.status === 'injured') return total; // Heróis feridos não geram ouro
+            return total + (adv.gps || 0);
+        }, 0);
     },
 
-    // Função de contratar herói
-    hire(typeId) {
-        const template = this.types.find(t => t.id === typeId);
+    // Contratação de herói
+    hire(classId) {
+        const template = this.classes.find(c => c.id === classId);
         if (!template) return;
 
-        const count = state.adventurers.filter(a => a.typeId === typeId).length;
-        const currentCost = Math.floor(template.baseCost * Math.pow(template.costMult, count));
+        const count = state.adventurers.filter(a => a.classId === classId).length;
+        const cost = Math.floor(template.baseCost * Math.pow(1.15, count));
 
-        if (state.gold >= currentCost && state.adventurers.length < state.maxMembers) {
-            state.gold -= currentCost;
+        if (state.gold >= cost && state.adventurers.length < state.maxMembers) {
+            state.gold -= cost;
             state.adventurers.push({
                 id: Date.now(),
-                typeId: template.id,
+                classId: template.id,
                 name: `${template.name} #${count + 1}`,
                 gps: template.baseGps,
-                level: 1
+                power: template.power,
+                level: 1,
+                status: 'available' // available, on-quest, injured
             });
 
             this.render();
@@ -40,28 +45,28 @@ const Adventurers = {
         }
     },
 
-    // Renderiza a lista de cards de recrutamento e lista de membros
     render() {
         const container = document.getElementById('adventurers-container');
         if (!container) return;
 
-        let html = '<h2>👥 Recrutamento de Aventureiros</h2><div class="cards-grid">';
+        let html = '<h2>👥 Taverna de Recrutamento</h2><div class="cards-grid">';
 
-        this.types.forEach(type => {
-            const count = (state.adventurers || []).filter(a => a.typeId === type.id).length;
-            const cost = Math.floor(type.baseCost * Math.pow(type.costMult, count));
+        this.classes.forEach(cls => {
+            const count = (state.adventurers || []).filter(a => a.classId === cls.id).length;
+            const cost = Math.floor(cls.baseCost * Math.pow(1.15, count));
             const canAfford = state.gold >= cost;
             const hasSpace = (state.adventurers || []).length < state.maxMembers;
 
             html += `
                 <div class="card">
-                    <div class="card-icon">${type.icon}</div>
-                    <h3>${type.name}</h3>
-                    <p>Rendimento: +${type.baseGps} Ouro/s</p>
+                    <div class="card-icon">${cls.icon}</div>
+                    <h3>${cls.name}</h3>
+                    <p>Rendimento: +${cls.baseGps} Ouro/s</p>
+                    <p>Poder de Luta: ⚔️ ${cls.power}</p>
                     <p>Contratados: <strong>${count}</strong></p>
                     <button class="action-btn" 
                             data-cost="${cost}"
-                            onclick="Adventurers.hire('${type.id}')" 
+                            onclick="Adventurers.hire('${cls.id}')" 
                             ${(!canAfford || !hasSpace) ? 'disabled' : ''}>
                         Contratar (${cost} Ouro)
                     </button>
@@ -69,12 +74,16 @@ const Adventurers = {
             `;
         });
 
-        html += '</div><hr><h3>Membros na Guilda</h3>';
+        html += '</div><hr><h3>Membros da Guilda</h3>';
 
         if (state.adventurers && state.adventurers.length > 0) {
             html += '<ul class="member-list">';
             state.adventurers.forEach(adv => {
-                html += `<li><strong>${adv.name}</strong> — Rendimento: +${adv.gps} GPS</li>`;
+                let statusTxt = 'Disponível';
+                if (adv.status === 'on-quest') statusTxt = 'Em Missão';
+                if (adv.status === 'injured') statusTxt = 'Ferido 🩹';
+
+                html += `<li><strong>${adv.name}</strong> (Nível ${adv.level}) — Poder: ${adv.power} | GPS: +${adv.gps} | Status: <em>${statusTxt}</em></li>`;
             });
             html += '</ul>';
         } else {
