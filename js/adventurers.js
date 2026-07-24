@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ADVENTURERS.JS - CLASSES, EXP, LEVEL UP E PODER
+   ADVENTURERS.JS - HERÓIS, EQUIPAMENTOS E PODER
    ========================================================================== */
 
 const Adventurers = {
@@ -12,7 +12,7 @@ const Adventurers = {
 
     getMaxPartySize() {
         const tableLvl = (state.buildings && state.buildings.strategyTable) || 0;
-        return Math.min(4, 1 + tableLvl); // Começa com 1, vai até 4
+        return Math.min(4, 1 + tableLvl);
     },
 
     calculateNextXp(level) {
@@ -20,10 +20,29 @@ const Adventurers = {
     },
 
     getEffectivePower(adv) {
-        const basePower = adv.power || 10;
+        let basePower = adv.power || 10;
+        
+        // Adicionar Poder da Arma Equipada
+        if (adv.weaponInstanceId && state.inventory) {
+            const inv = state.inventory.find(i => i.instanceId === adv.weaponInstanceId);
+            if (inv && Items.catalog) {
+                const itemDef = Items.catalog.find(c => c.id === inv.itemId);
+                if (itemDef && itemDef.power) basePower += itemDef.power;
+            }
+        }
+
         const level = adv.level || 1;
         
-        const levelMult = adv.classId === 'guerreiro' ? 0.10 : 0.05;
+        // Passiva Guerreiro (com bônus do item secundário se houver)
+        let levelMult = adv.classId === 'guerreiro' ? 0.10 : 0.05;
+        if (adv.classId === 'guerreiro' && adv.secondaryInstanceId) {
+            const inv = state.inventory.find(i => i.instanceId === adv.secondaryInstanceId);
+            if (inv) {
+                const itemDef = Items.catalog.find(c => c.id === inv.itemId);
+                if (itemDef && itemDef.passBonus) levelMult += itemDef.passBonus;
+            }
+        }
+
         const levelBonus = 1 + ((level - 1) * levelMult);
 
         const trainingLvl = (state.buildings && state.buildings.training) || 0;
@@ -68,7 +87,9 @@ const Adventurers = {
                 level: 1,
                 xp: 0,
                 maxXp: this.calculateNextXp(1),
-                status: 'available'
+                status: 'available',
+                weaponInstanceId: null,
+                secondaryInstanceId: null
             });
 
             this.render();
@@ -89,6 +110,14 @@ const Adventurers = {
             if (typeof UI !== 'undefined') UI.update();
             if (typeof Quests !== 'undefined') Quests.render();
         }
+    },
+
+    getEquippedItemName(instanceId) {
+        if (!instanceId || !state.inventory) return 'Vazio';
+        const inv = state.inventory.find(i => i.instanceId === instanceId);
+        if (!inv) return 'Vazio';
+        const template = Items.catalog.find(c => c.id === inv.itemId);
+        return template ? `${template.icon} ${template.name}` : 'Vazio';
     },
 
     render() {
@@ -137,16 +166,24 @@ const Adventurers = {
                 }
 
                 const xpPct = Math.floor((adv.xp / adv.maxXp) * 100);
+                const weaponName = this.getEquippedItemName(adv.weaponInstanceId);
+                const secondaryName = this.getEquippedItemName(adv.secondaryInstanceId);
 
                 html += `
                     <li>
-                        <div style="flex: 1; margin-right: 15px;">
-                            <strong>${adv.name}</strong> (Nível ${adv.level}) — Poder: ⚔️ ${effectivePower} | Status: <em>${statusTxt}</em>
+                        <div style="flex: 1;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong>${adv.name}</strong> (Nível ${adv.level}) — Poder: ⚔️ ${effectivePower} | Status: <em>${statusTxt}</em>
+                                ${healAction}
+                            </div>
                             <div class="xp-bar-container" title="XP: ${adv.xp}/${adv.maxXp}">
                                 <div class="xp-bar-fill" style="width: ${xpPct}%;"></div>
                             </div>
+                            <div class="equip-slots">
+                                <button class="equip-btn" onclick="Items.openModal(${adv.id}, 'weapon')">🗡️ Arma: ${weaponName}</button>
+                                <button class="equip-btn" onclick="Items.openModal(${adv.id}, 'secondary')">🛡️ Secundário: ${secondaryName}</button>
+                            </div>
                         </div>
-                        ${healAction}
                     </li>`;
             });
             html += '</ul>';
