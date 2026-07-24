@@ -1,118 +1,137 @@
 /* ==========================================================================
-   QUESTS.JS - MURAL DE MISSÕES E CÁLCULO DE CHANCE
+   QUESTS.JS - LÓGICA DE MISSÕES COM TAXA DE SUCESSO E RISCO
    ========================================================================== */
 
-const Quests = {
-    available: [
-        { id: 'rats', title: 'Caçar Ratos no Porão', duration: 5, rewardGold: 35, reqPower: 8, icon: '🐀' },
-        { id: 'goblin', title: 'Patrulhar a Floresta', duration: 12, rewardGold: 120, reqPower: 20, icon: '🌲' },
-        { id: 'escort', title: 'Escoltar Caravana', duration: 25, rewardGold: 400, reqPower: 60, icon: '🛒' },
-        { id: 'dragon', title: 'Investigar Caverna', duration: 50, rewardGold: 1200, reqPower: 150, icon: '🐉' }
-    ],
-
-    // Retorna a taxa % de sucesso com base no poder
-    getSuccessChance(heroPower, reqPower) {
-        if (!heroPower) return 0;
-        const ratio = heroPower / reqPower;
-        let chance = Math.floor(ratio * 75);
-        return Math.min(100, Math.max(5, chance));
+const availableQuestsList = [
+    {
+        id: "rat_infestation",
+        title: "Infestação na Taverna",
+        description: "Livre o porão dos ratos gigantes. Missão simples para novatos.",
+        baseDuration: 8,
+        requiredPower: 10,
+        goldReward: 25,
+        xpReward: 15
     },
-
-    // Retorna a classificação das 5 escalas de cores
-    getChanceBadge(chance) {
-        if (chance >= 95) return '<span class="badge" style="background: #2ed573; color: #fff;">Muito Fácil (100%)</span>';
-        if (chance >= 75) return '<span class="badge" style="background: #1e90ff; color: #fff;">Fácil (' + chance + '%)</span>';
-        if (chance >= 50) return '<span class="badge" style="background: #ffa502; color: #fff;">Média (' + chance + '%)</span>';
-        if (chance >= 25) return '<span class="badge" style="background: #ff6348; color: #fff;">Difícil (' + chance + '%)</span>';
-        return '<span class="badge" style="background: #ff4757; color: #fff;">Muito Difícil (' + chance + '%)</span>';
+    {
+        id: "goblin_patrol",
+        title: "Patrulha de Goblins",
+        description: "Goblins foram vistos perto da vila. Requer um pouco mais de força.",
+        baseDuration: 15,
+        requiredPower: 22,
+        goldReward: 60,
+        xpReward: 35
     },
-
-    startQuest(questId) {
-        const selectElem = document.getElementById(`select-hero-${questId}`);
-        if (!selectElem) return;
-
-        const heroId = Number(selectElem.value);
-        const hero = (state.adventurers || []).find(a => a.id === heroId);
-        const quest = this.available.find(q => q.id === questId);
-
-        if (!hero || !quest || hero.status !== 'available') return;
-
-        hero.status = 'on-quest';
-        state.activeQuests.push({
-            ...quest,
-            instanceId: Date.now(),
-            heroId: hero.id,
-            heroName: hero.name,
-            heroPower: hero.power,
-            elapsed: 0
-        });
-
-        if (typeof Adventurers !== 'undefined') Adventurers.render();
-        this.render();
-        if (typeof UI !== 'undefined') UI.update();
+    {
+        id: "bandit_camp",
+        title: "Acampamento de Salteadores",
+        description: "Limpe a estrada comercial atacada por bandidos armados.",
+        baseDuration: 25,
+        requiredPower: 38,
+        goldReward: 120,
+        xpReward: 70
     },
-
-    updateActiveQuests(dt) {
-        if (!state.activeQuests) return;
-
-        for (let i = state.activeQuests.length - 1; i >= 0; i--) {
-            const q = state.activeQuests[i];
-            q.elapsed += dt;
-
-            if (q.elapsed >= q.duration) {
-                const hero = (state.adventurers || []).find(a => a.id === q.heroId);
-                const chance = this.getSuccessChance(q.heroPower, q.reqPower);
-                const roll = Math.random() * 100;
-
-                if (roll <= chance) {
-                    state.gold += q.rewardGold;
-                    if (hero) {
-                        hero.status = 'available';
-                        hero.level += 1;
-                        hero.power += 3;
-                    }
-                } else {
-                    if (hero) hero.status = 'injured';
-                }
-
-                state.activeQuests.splice(i, 1);
-                if (typeof Adventurers !== 'undefined') Adventurers.render();
-                this.render();
-            }
-        }
-    },
-
-    render() {
-        const container = document.getElementById('quests-container');
-        if (!container) return;
-
-        let html = '<h2>📜 Mural de Missões</h2><div class="cards-grid">';
-        const availableHeroes = (state.adventurers || []).filter(a => a.status === 'available');
-
-        this.available.forEach(quest => {
-            html += `
-                <div class="card">
-                    <div class="card-icon">${quest.icon}</div>
-                    <h3>${quest.title}</h3>
-                    <p>Duração: ${quest.duration}s | Recompensa: 💰 ${quest.rewardGold}</p>
-                    <p>Poder Necessário: ⚔️ ${quest.reqPower}</p>
-                    <div style="margin: 10px 0;">
-                        <select id="select-hero-${quest.id}" style="padding: 5px; width: 100%; margin-bottom: 5px;" ${availableHeroes.length === 0 ? 'disabled' : ''}>
-                            ${availableHeroes.length === 0 ? '<option>Nenhum herói disponível</option>' : ''}
-                            ${availableHeroes.map(h => {
-                                const chance = this.getSuccessChance(h.power, quest.reqPower);
-                                return `<option value="${h.id}">${h.name} (Poder ${h.power} - ${chance}%)</option>`;
-                            }).join('')}
-                        </select>
-                    </div>
-                    <button class="action-btn" onclick="Quests.startQuest('${quest.id}')" ${availableHeroes.length === 0 ? 'disabled' : ''}>
-                        Enviar Aventureiro
-                    </button>
-                </div>
-            `;
-        });
-
-        html += '</div>';
-        container.innerHTML = html;
+    {
+        id: "dungeon_boss",
+        title: "Templo Esquecido",
+        description: "Uma ameaça ancestral desperta. Alto risco de ferimentos!",
+        baseDuration: 40,
+        requiredPower: 60,
+        goldReward: 280,
+        xpReward: 160
     }
-};
+];
+
+// Calcula a chance de sucesso (entre 10% e 100%)
+function calculateSuccessChance(hero, quest) {
+    if (!hero || !quest) return 0;
+    const powerRatio = hero.stats.power / quest.requiredPower;
+    let chance = Math.floor(powerRatio * 75); // Se tiver o poder exato = 75%
+    return Math.max(10, Math.min(100, chance)); // Limita entre 10% e 100%
+}
+
+// Calcula a duração reduzida com base na Velocidade do Herói
+function calculateQuestDuration(hero, quest) {
+    if (!hero || !quest) return quest.baseDuration;
+    const speedBonus = hero.stats.speed * 0.02; // Cada ponto reduz 2% do tempo
+    const duration = quest.baseDuration / (1 + speedBonus);
+    return Math.max(3, duration); // Tempo mínimo de 3 segundos
+}
+
+function startQuest(questId, heroId) {
+    const quest = availableQuestsList.find(q => q.id === questId);
+    const hero = gameState.adventurers.find(h => h.id === heroId);
+
+    if (!quest || !hero || hero.status !== "available") return;
+
+    hero.status = "on_quest";
+
+    const duration = calculateQuestDuration(hero, quest);
+    const successChance = calculateSuccessChance(hero, quest);
+
+    gameState.activeQuests.push({
+        id: quest.id,
+        heroId: hero.id,
+        heroName: hero.name,
+        title: quest.title,
+        duration: duration,
+        timeRemaining: duration,
+        goldReward: quest.goldReward,
+        xpReward: quest.xpReward,
+        successChance: successChance,
+        requiredPower: quest.requiredPower
+    });
+
+    if (typeof saveGame === 'function') saveGame();
+    if (typeof updateUI === 'function') updateUI();
+    if (typeof renderQuests === 'function') renderQuests();
+    if (typeof renderAdventurers === 'function') renderAdventurers();
+}
+
+function updateQuests(deltaSeconds) {
+    if (!Array.isArray(gameState.activeQuests) || gameState.activeQuests.length === 0) return;
+
+    let updated = false;
+
+    for (let i = gameState.activeQuests.length - 1; i >= 0; i--) {
+        const active = gameState.activeQuests[i];
+        active.timeRemaining -= deltaSeconds;
+
+        if (active.timeRemaining <= 0) {
+            completeQuest(active);
+            gameState.activeQuests.splice(i, 1);
+            updated = true;
+        }
+    }
+
+    if (updated) {
+        if (typeof saveGame === 'function') saveGame();
+        if (typeof updateUI === 'function') updateUI();
+        if (typeof renderQuests === 'function') renderQuests();
+        if (typeof renderAdventurers === 'function') renderAdventurers();
+    }
+}
+
+function completeQuest(activeQuest) {
+    const hero = gameState.adventurers.find(h => h.id === activeQuest.heroId);
+    if (!hero) return;
+
+    // Rola a sorte para sucesso ou falha
+    const roll = Math.random() * 100;
+    const isSuccess = roll <= activeQuest.successChance;
+
+    if (isSuccess) {
+        gameState.gold += activeQuest.goldReward;
+        if (typeof hero.gainXp === 'function') {
+            hero.gainXp(activeQuest.xpReward);
+        }
+        hero.status = "available";
+    } else {
+        // FALHA: Herói fica ferido. A defesa reduz o tempo do ferimento!
+        const baseInjury = 15; // 15 segundos base de ferimento
+        const defReduction = hero.stats.defense * 0.3; 
+        const injuryTime = Math.max(5, Math.ceil(baseInjury - defReduction));
+
+        hero.status = "injured";
+        hero.injuryTimer = injuryTime;
+    }
+}
