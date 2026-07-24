@@ -1,102 +1,87 @@
 /* ==========================================================================
-   ADVENTURERS.JS - RECRUTAMENTO E LÓGICA PASSIVA
+   ADVENTURERS.JS - RECRUTAMENTO E GERENCIAMENTO DE HERÓIS
    ========================================================================== */
 
-function recruitAldric() {
-    const hasAldric = gameState.adventurers.some(hero => hero.id === "aldric_1");
-    if (!hasAldric) {
-        const aldric = new Hero("aldric_1", "Aldric", "Guerreiro");
-        gameState.adventurers.push(aldric);
-    }
-}
+const Adventurers = {
+    // Tipos de Heróis disponíveis para contratação
+    types: [
+        { id: 'novice', name: 'Novato', baseCost: 50, baseGps: 1, costMult: 1.15, icon: '🗡️' },
+        { id: 'archer', name: 'Arqueiro', baseCost: 200, baseGps: 5, costMult: 1.15, icon: '🏹' },
+        { id: 'mage', name: 'Mago', baseCost: 800, baseGps: 22, costMult: 1.15, icon: '🔮' },
+        { id: 'knight', name: 'Cavaleiro', baseCost: 3500, baseGps: 90, costMult: 1.15, icon: '🛡️' }
+    ],
 
-const recruitNames = ["Gideon", "Lyra", "Eldrin", "Valerie", "Kaelen", "Soren", "Thorne", "Aria"];
+    // Calcula o ganho total de ouro por segundo (GPS)
+    calculateTotalGPS() {
+        if (!state.adventurers) return 0;
+        return state.adventurers.reduce((total, adv) => total + (adv.gps || 0), 0);
+    },
 
-function hireAdventurer(heroClass, cost, event) {
-    if (gameState.gold < cost || gameState.adventurers.length >= gameState.maxMembers) {
-        if (event && event.currentTarget) triggerErrorEffect(event.currentTarget);
-        return;
-    }
+    // Contrata um herói
+    hire(typeId) {
+        const template = this.types.find(t => t.id === typeId);
+        if (!template) return;
 
-    const randomName = recruitNames[Math.floor(Math.random() * recruitNames.length)];
-    const uniqueId = `hero_${Date.now()}`;
+        const count = state.adventurers.filter(a => a.typeId === typeId).length;
+        const currentCost = Math.floor(template.baseCost * Math.pow(template.costMult, count));
 
-    gameState.gold -= cost;
+        if (state.gold >= currentCost && state.adventurers.length < state.maxMembers) {
+            state.gold -= currentCost;
+            state.adventurers.push({
+                id: Date.now(),
+                typeId: template.id,
+                name: `${template.name} #${count + 1}`,
+                gps: template.baseGps,
+                level: 1
+            });
 
-    const newHero = new Hero(uniqueId, randomName, heroClass);
-    gameState.adventurers.push(newHero);
-
-    if (typeof saveGame === 'function') saveGame();
-    if (typeof updateUI === 'function') updateUI();
-    if (typeof renderAdventurers === 'function') renderAdventurers();
-}
-
-function healHero(heroId, cost = 15, event) {
-    const hero = gameState.adventurers.find(h => h.id === heroId);
-    if (!hero) return;
-
-    if (gameState.gold < cost) {
-        if (event && event.currentTarget) triggerErrorEffect(event.currentTarget);
-        return;
-    }
-
-    gameState.gold -= cost;
-    hero.status = "available";
-    hero.injuryTimer = 0;
-
-    if (typeof saveGame === 'function') saveGame();
-    if (typeof updateUI === 'function') updateUI();
-    if (typeof renderAdventurers === 'function') renderAdventurers();
-}
-
-function updateAdventurersTimers(deltaSeconds) {
-    const infirmaryLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('infirmary') : 0;
-    const timeSpeedup = 1 + (infirmaryLevel * 0.25);
-    const trainingLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('training_hall') : 0;
-
-    if (!Array.isArray(gameState.adventurers)) return;
-
-    let shouldRender = false;
-
-    gameState.adventurers.forEach(hero => {
-        // Redução do tempo de cura
-        if (hero.status === "injured") {
-            hero.injuryTimer -= (deltaSeconds * timeSpeedup);
-            if (hero.injuryTimer <= 0) {
-                hero.injuryTimer = 0;
-                hero.status = "available";
-                shouldRender = true;
-            }
+            this.render();
+            if (typeof UI !== 'undefined') UI.update();
         }
+    },
 
-        // XP Passivo do Centro de Treinamento
-        if (hero.status === "available" && trainingLevel > 0) {
-            // Cada nível do Centro de Treinamento dá 1 XP/s por herói
-            const xpGained = trainingLevel * deltaSeconds;
-            if (typeof hero.gainXp === 'function') {
-                hero.gainXp(xpGained);
-                shouldRender = true;
-            }
-        }
-    });
+    // Renderiza a lista de heróis e a loja de recrutamento
+    render() {
+        const container = document.getElementById('adventurers-list') || document.getElementById('tab-adventurers');
+        if (!container) return;
 
-    // Atualiza a tela de heróis se estiver na aba Aventureiros
-    if (shouldRender) {
-        const activeTab = document.getElementById('tab-aventureiros');
-        if (activeTab && activeTab.classList.contains('active') && typeof renderAdventurers === 'function') {
-            renderAdventurers();
+        let html = '<h2>👥 Recrutamento de Aventureiros</h2><div class="cards-grid">';
+
+        this.types.forEach(type => {
+            const count = (state.adventurers || []).filter(a => a.typeId === type.id).length;
+            const cost = Math.floor(type.baseCost * Math.pow(type.costMult, count));
+            const canAfford = state.gold >= cost;
+            const hasSpace = (state.adventurers || []).length < state.maxMembers;
+
+            html += `
+                <div class="card">
+                    <div class="card-icon">${type.icon}</div>
+                    <h3>${type.name}</h3>
+                    <p>Rendimento: +${type.baseGps} Ouro/s</p>
+                    <p>Contratados: <strong>${count}</strong></p>
+                    <button class="action-btn" 
+                            data-cost="${cost}"
+                            onclick="Adventurers.hire('${type.id}')" 
+                            ${(!canAfford || !hasSpace) ? 'disabled' : ''}>
+                        Contratar (${cost} Ouro)
+                    </button>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+
+        // Lista de Membros Atuais
+        html += '<h3 style="margin-top: 20px;">Guilda Atual</h3><ul class="member-list">';
+        if (state.adventurers && state.adventurers.length > 0) {
+            state.adventurers.forEach(adv => {
+                html += `<li><span>${adv.name}</span> <span>+${adv.gps} GPS</span></li>`;
+            });
+        } else {
+            html += '<p class="empty-msg">Nenhum herói contratado ainda.</p>';
         }
+        html += '</ul>';
+
+        container.innerHTML = html;
     }
-}
-
-function calculateGoldPerSecond() {
-    const contractBoardLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('contract_board') : 0;
-    if (contractBoardLevel <= 0 || !Array.isArray(gameState.adventurers)) return 0;
-
-    const totalPower = gameState.adventurers.reduce((sum, hero) => {
-        const power = (hero && hero.stats && typeof hero.stats.power === 'number') ? hero.stats.power : 10;
-        return sum + power;
-    }, 0);
-
-    return totalPower * contractBoardLevel * 0.2;
-}
+};
