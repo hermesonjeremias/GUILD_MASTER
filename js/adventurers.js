@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ADVENTURERS.JS - RECRUTAMENTO E TRATAMENTO DE HERÓIS
+   ADVENTURERS.JS - RECRUTAMENTO E LÓGICA PASSIVA
    ========================================================================== */
 
 function recruitAldric() {
@@ -50,32 +50,47 @@ function healHero(heroId, cost = 15, event) {
 }
 
 function updateAdventurersTimers(deltaSeconds) {
-    const infirmaryLevel = getBuildingLevel('infirmary');
+    const infirmaryLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('infirmary') : 0;
     const timeSpeedup = 1 + (infirmaryLevel * 0.25);
-    const trainingLevel = getBuildingLevel('training_hall');
+    const trainingLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('training_hall') : 0;
 
     if (!Array.isArray(gameState.adventurers)) return;
 
+    let shouldRender = false;
+
     gameState.adventurers.forEach(hero => {
+        // Redução do tempo de cura
         if (hero.status === "injured") {
             hero.injuryTimer -= (deltaSeconds * timeSpeedup);
             if (hero.injuryTimer <= 0) {
                 hero.injuryTimer = 0;
                 hero.status = "available";
-                if (typeof renderAdventurers === 'function') renderAdventurers();
+                shouldRender = true;
             }
         }
 
+        // XP Passivo do Centro de Treinamento
         if (hero.status === "available" && trainingLevel > 0) {
+            // Cada nível do Centro de Treinamento dá 1 XP/s por herói
+            const xpGained = trainingLevel * deltaSeconds;
             if (typeof hero.gainXp === 'function') {
-                hero.gainXp(trainingLevel * deltaSeconds);
+                hero.gainXp(xpGained);
+                shouldRender = true;
             }
         }
     });
+
+    // Atualiza a tela de heróis se estiver na aba Aventureiros
+    if (shouldRender) {
+        const activeTab = document.getElementById('tab-aventureiros');
+        if (activeTab && activeTab.classList.contains('active') && typeof renderAdventurers === 'function') {
+            renderAdventurers();
+        }
+    }
 }
 
 function calculateGoldPerSecond() {
-    const contractBoardLevel = getBuildingLevel('contract_board');
+    const contractBoardLevel = typeof getBuildingLevel === 'function' ? getBuildingLevel('contract_board') : 0;
     if (contractBoardLevel <= 0 || !Array.isArray(gameState.adventurers)) return 0;
 
     const totalPower = gameState.adventurers.reduce((sum, hero) => {
