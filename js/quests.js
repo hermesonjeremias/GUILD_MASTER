@@ -1,15 +1,16 @@
 /* ==========================================================================
-   QUESTS.JS - QUARTEL DE MISSÕES (COM AS 5 ESCALAS DE CORES)
+   QUESTS.JS - MURAL DE MISSÕES E CÁLCULO DE CHANCE
    ========================================================================== */
 
 const Quests = {
-    list: [
-        { id: 'q1', title: 'Caçar Ratos no Porão', duration: 8, rewardGold: 45, reqPower: 8, icon: '🐀' },
-        { id: 'q2', title: 'Patrulhar as Estradas', duration: 15, rewardGold: 120, reqPower: 15, icon: '🌲' },
-        { id: 'q3', title: 'Limpar Acampamento Goblin', duration: 30, rewardGold: 350, reqPower: 30, icon: '👺' },
-        { id: 'q4', title: 'Investigar Caverna Sombria', duration: 60, rewardGold: 1000, reqPower: 60, icon: '🦇' }
+    available: [
+        { id: 'rats', title: 'Caçar Ratos no Porão', duration: 5, rewardGold: 35, reqPower: 8, icon: '🐀' },
+        { id: 'goblin', title: 'Patrulhar a Floresta', duration: 12, rewardGold: 120, reqPower: 20, icon: '🌲' },
+        { id: 'escort', title: 'Escoltar Caravana', duration: 25, rewardGold: 400, reqPower: 60, icon: '🛒' },
+        { id: 'dragon', title: 'Investigar Caverna', duration: 50, rewardGold: 1200, reqPower: 150, icon: '🐉' }
     ],
 
+    // Retorna a taxa % de sucesso com base no poder
     getSuccessChance(heroPower, reqPower) {
         if (!heroPower) return 0;
         const ratio = heroPower / reqPower;
@@ -17,12 +18,13 @@ const Quests = {
         return Math.min(100, Math.max(5, chance));
     },
 
-    getChanceClass(chance) {
-        if (chance >= 96) return 'chance-blue';
-        if (chance >= 76) return 'chance-green';
-        if (chance >= 51) return 'chance-yellow';
-        if (chance >= 26) return 'chance-orange';
-        return 'chance-red';
+    // Retorna a classificação das 5 escalas de cores
+    getChanceBadge(chance) {
+        if (chance >= 95) return '<span class="badge" style="background: #2ed573; color: #fff;">Muito Fácil (100%)</span>';
+        if (chance >= 75) return '<span class="badge" style="background: #1e90ff; color: #fff;">Fácil (' + chance + '%)</span>';
+        if (chance >= 50) return '<span class="badge" style="background: #ffa502; color: #fff;">Média (' + chance + '%)</span>';
+        if (chance >= 25) return '<span class="badge" style="background: #ff6348; color: #fff;">Difícil (' + chance + '%)</span>';
+        return '<span class="badge" style="background: #ff4757; color: #fff;">Muito Difícil (' + chance + '%)</span>';
     },
 
     startQuest(questId) {
@@ -31,7 +33,7 @@ const Quests = {
 
         const heroId = Number(selectElem.value);
         const hero = (state.adventurers || []).find(a => a.id === heroId);
-        const quest = this.list.find(q => q.id === questId);
+        const quest = this.available.find(q => q.id === questId);
 
         if (!hero || !quest || hero.status !== 'available') return;
 
@@ -67,7 +69,7 @@ const Quests = {
                     if (hero) {
                         hero.status = 'available';
                         hero.level += 1;
-                        hero.power += 2;
+                        hero.power += 3;
                     }
                 } else {
                     if (hero) hero.status = 'injured';
@@ -84,34 +86,33 @@ const Quests = {
         const container = document.getElementById('quests-container');
         if (!container) return;
 
-        let html = '<h3>📜 Mural de Missões</h3>';
+        let html = '<h2>📜 Mural de Missões</h2><div class="cards-grid">';
         const availableHeroes = (state.adventurers || []).filter(a => a.status === 'available');
 
-        this.list.forEach(quest => {
+        this.available.forEach(quest => {
             html += `
-                <div class="quest-card">
-                    <h4>${quest.icon} ${quest.title}</h4>
-                    <div class="rewards">
-                        <span>⏱️ Duração: ${quest.duration}s</span>
-                        <span>🪙 Recompensa: +${quest.rewardGold} Ouro</span>
-                        <span>⚔️ Requerido: ${quest.reqPower} Poder</span>
-                    </div>
-                    <div class="quest-actions">
-                        <select id="select-hero-${quest.id}" ${availableHeroes.length === 0 ? 'disabled' : ''}>
+                <div class="card">
+                    <div class="card-icon">${quest.icon}</div>
+                    <h3>${quest.title}</h3>
+                    <p>Duração: ${quest.duration}s | Recompensa: 💰 ${quest.rewardGold}</p>
+                    <p>Poder Necessário: ⚔️ ${quest.reqPower}</p>
+                    <div style="margin: 10px 0;">
+                        <select id="select-hero-${quest.id}" style="padding: 5px; width: 100%; margin-bottom: 5px;" ${availableHeroes.length === 0 ? 'disabled' : ''}>
                             ${availableHeroes.length === 0 ? '<option>Nenhum herói disponível</option>' : ''}
                             ${availableHeroes.map(h => {
                                 const chance = this.getSuccessChance(h.power, quest.reqPower);
-                                return `<option value="${h.id}">${h.name} (Poder: ${h.power} | Sucesso: ${chance}%)</option>`;
+                                return `<option value="${h.id}">${h.name} (Poder ${h.power} - ${chance}%)</option>`;
                             }).join('')}
                         </select>
-                        <button class="action-btn" onclick="Quests.startQuest('${quest.id}')" ${availableHeroes.length === 0 ? 'disabled' : ''}>
-                            Iniciar
-                        </button>
                     </div>
+                    <button class="action-btn" onclick="Quests.startQuest('${quest.id}')" ${availableHeroes.length === 0 ? 'disabled' : ''}>
+                        Enviar Aventureiro
+                    </button>
                 </div>
             `;
         });
 
+        html += '</div>';
         container.innerHTML = html;
     }
 };
