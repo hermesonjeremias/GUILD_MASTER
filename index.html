@@ -3,46 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guild Incremental Game</title>
+    <title>Guilda dos Aventureiros</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app">
-        <header>
-            <div class="stats-bar">
-                <div class="stat-item">🪙 Ouro: <span id="gold-display">0</span></div>
-                <div class="stat-item">⚡ GPS: <span id="gps-display">0</span></div>
-                <div class="stat-item">👥 Membros: <span id="members-display">0/5</span></div>
-                <div class="stat-item">🚩 Prestígio: <span id="prestige-display">0</span></div>
-            </div>
-        </header>
 
-        <nav class="tabs">
-            <button class="nav-btn active" onclick="switchTab('aventureiros')">Aventureiros</button>
-            <button class="nav-btn" onclick="switchTab('missoes')">Missões</button>
-            <button class="nav-btn" onclick="switchTab('construcoes')">Construções</button>
-        </nav>
+    <!-- PAINEL SUPERIOR DE RECURSOS -->
+    <header id="resource-bar">
+        <div class="resource-item">
+            🪙 Ouro: <strong id="gold-display">0</strong>
+            <span class="gps-tag">(+<span id="gps-display">0.0</span>/s)</span>
+        </div>
+        <div class="resource-item">
+            👑 Prestígio: <strong id="prestige-display">0</strong>
+        </div>
+        <div class="resource-item">
+            👥 Membros: <strong id="members-display">0/0</strong>
+        </div>
+        <button class="reset-btn" onclick="resetGame()">🔄 Reiniciar</button>
+    </header>
 
-        <main>
-            <div id="tab-aventureiros" class="tab-content active">
-                <div id="adventurers-container"></div>
-            </div>
-            <div id="tab-missoes" class="tab-content">
-                <div id="quests-container"></div>
-                <div id="active-quests-container" style="margin-top: 20px;"></div>
-            </div>
-            <div id="tab-construcoes" class="tab-content">
-                <div id="buildings-container"></div>
-            </div>
-        </main>
-    </div>
+    <!-- MENU NAVEGAÇÃO DE ABAS -->
+    <nav id="tabs-navigation">
+        <button class="nav-btn active" onclick="switchTab('aventureiros')">⚔️ Aventureiros</button>
+        <button class="nav-btn" onclick="switchTab('missoes')">📜 Missões</button>
+        <button class="nav-btn" onclick="switchTab('construcoes')">🏛️ Construções</button>
+        <button class="nav-btn" onclick="switchTab('loja')">🛒 Mercado</button>
+    </nav>
 
-    <!-- Scripts em Ordem de Dependência -->
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main id="game-content">
+
+        <!-- ABA 1: AVENTUREIROS & RECRUTAMENTO -->
+        <section id="tab-aventureiros" class="tab-content active">
+            <div id="adventurers-container"></div>
+        </section>
+
+        <!-- ABA 2: MISSÕES -->
+        <section id="tab-missoes" class="tab-content">
+            <div id="active-quests-container" class="active-quests-box"></div>
+            <div id="quests-container"></div>
+        </section>
+
+        <!-- ABA 3: CONSTRUÇÕES -->
+        <section id="tab-construcoes" class="tab-content">
+            <div id="buildings-container"></div>
+        </section>
+
+        <!-- ABA 4: MERCADO -->
+        <section id="tab-loja" class="tab-content">
+            <div id="shop-container"></div>
+        </section>
+
+    </main>
+
+    <!-- CARREGAMENTO DOS SCRIPTS JS (ORDEM DE DEPENDÊNCIA) -->
     <script src="js/state.js"></script>
     <script src="js/adventurers.js"></script>
+    <script src="js/items.js"></script>
     <script src="js/quests.js"></script>
     <script src="js/buildings.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/game.js"></script>
+
 </body>
 </html>
